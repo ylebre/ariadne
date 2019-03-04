@@ -29,13 +29,9 @@
 	<div class="field">
 		<label for="value"><?php echo $ARnls["page"]; ?></label>
 		<img class="flag" src="<?php echo $flagurl; ?>" alt="<?php echo $selectedlanguage; ?>">
-		<?php
-			$wgHTMLEditName="page";
-			$wgHTMLEditLanguage=$selectednls;
-			$wgHTMLEditContent=$this->ParsePage($this->getdata("page",$selectednls), true, true);
-			include($this->store->get_config("code")."widgets/htmledit/js.html");
-			include($this->store->get_config("code")."widgets/htmledit/form.html");
-		?>
+		<textarea id="page" name="<?php echo $selectednls."[page]"; ?>" class="inputbox" rows="5" cols="42"><?php
+			echo $this->showdata("page", $selectednls);
+		?></textarea>
 	</div>
 	<?php } ?>
 	<?php

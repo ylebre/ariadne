@@ -2306,7 +2306,6 @@ abstract class ariadne_object extends object { // ariadne_object class definitio
 	// function to retrieve variables from $this->data, with the correct
 	// language version.
 	global $ARCurrent;
-
 		$result = false;
 		if ($nls!="none") {
 			if ($ARCurrent->arCallStack) {
@@ -2317,13 +2316,14 @@ abstract class ariadne_object extends object { // ariadne_object class definitio
 					Parse_Str($arCallArgs);
 				}
 			}
+
 			if (isset(${$nls}[$varname])) {
 				$result=${$nls}[$varname];
 			} else if (isset($ARCurrent->$nls) && isset($ARCurrent->$nls->$varname)) {
 				$result=$ARCurrent->$nls->$varname;
-			} else if (($values=$_POST[$nls]) && isset($values[$varname])) {
+			} else if (isset($_POST[$nls]) && ($values=$_POST[$nls]) && isset($values[$varname])) {
 				$result=$values[$varname];
-			} else if (($values=$_GET[$nls]) && isset($values[$varname])) {
+			} else if (isset($_GET[$nls]) && ($values=$_GET[$nls]) && isset($values[$varname])) {
 				$result=$values[$varname];
 			} else if (($arStoreVars=$_POST["arStoreVars"]) && isset($arStoreVars[$nls][$varname])) {
 				$result=$arStoreVars[$nls][$varname];

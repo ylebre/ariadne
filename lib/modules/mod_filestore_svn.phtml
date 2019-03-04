@@ -142,9 +142,7 @@
 		}
 
 		function get_path(&$svn, $name, $write = false) {
-			if ($write) {
-				$svn['object_id'] = $this->addObjectToLayer( $svn['object_id'] );
-			} else {
+			if (!$write) {
 				$svn['object_id'] = $this->getObjectId( $svn['object_id'] );
 			}
 			
@@ -793,8 +791,8 @@
 			return $this->copyRecursive($source, $target);
 		}
 
-		public function copyNode($id, $newid, $calledByStore = false) {
-			parent::copyNode($id, $newid, $calledByStore);
+		public function copyNode($id, $newid) {
+			parent::copyNode($id, $newid);
 			$this->copySvn($id, $newid);
 		}
 

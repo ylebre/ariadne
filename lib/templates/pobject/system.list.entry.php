@@ -14,6 +14,8 @@
 		"created"     => date("Y-m-d H:i",$this->data->ctime),
 		"language"    => $this->data->nls->list,
 		'local_url'   => $this->make_ariadne_url(),
+		'explore_url' => $this->make_ariadne_url() . "explore.html",
+		'viewpane_url' => $this->make_ariadne_url() . "viewpane.html",
 		'priority'    => $this->priority,
 		"vtype"       => $this->vtype,
 		"icons"       => array(

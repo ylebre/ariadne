@@ -29,13 +29,7 @@
 		$store->add_type("pshortcut","pshortcut");
 		$store->add_type("puser","pobject");
 		$store->add_type("puser","ppage");
-		// $store->add_type("puser","pdir");
 		$store->add_type("puser","puser");
-		$store->add_type("pshadowuser","pobject");
-		$store->add_type("pshadowuser","ppage");
-		// $store->add_type("pshadowuser","pdir");
-		$store->add_type("pshadowuser","puser");
-		$store->add_type("pshadowuser","pshadowuser");
 		$store->add_type("pgroup","pobject");
 		$store->add_type("pgroup","ppage");
 		$store->add_type("pgroup","pdir");
@@ -43,35 +37,6 @@
 		$store->add_type("pgroup","pgroup");
 		$store->add_type("ppage","pobject");
 		$store->add_type("ppage","ppage");
-		$store->add_type("pcalitem","pobject");
-		$store->add_type("pcalitem","pcalitem");
-		$store->add_type("pcalendar","pobject");
-		$store->add_type("pcalendar","ppage");
-		$store->add_type("pcalendar","pdir");
-		$store->add_type("pcalendar","pcalendar");
-		$store->add_type("pscenario","pobject");
-		$store->add_type("pscenario","pscenario");
-		$store->add_type("particle","pobject");
-		$store->add_type("particle","ppage");
-		$store->add_type("particle","particle");
-		$store->add_type("pnewspaper","pobject");
-		$store->add_type("pnewspaper","ppage");
-		$store->add_type("pnewspaper","pdir");
-		$store->add_type("pnewspaper","pnewspaper");
-
-		// Addressbook types and default objects
-
-		$store->add_type("paddressbook","pobject");
-		$store->add_type("paddressbook","ppage");
-		$store->add_type("paddressbook","pdir");
-		$store->add_type("paddressbook","paddressbook");
-		$store->add_type("pperson","pobject");
-		$store->add_type("pperson","address");
-		$store->add_type("pperson","pperson");
-		$store->add_type("porganization","pobject");
-		$store->add_type("porganization","address");
-		$store->add_type("porganization","porganization");
-
 
 		// install psite types and properties
 
@@ -104,13 +69,6 @@
 		$store->add_type("pprofile","pdir");
 		$store->add_type("pprofile","pprofile");
 
-		// install psearch type
-
-		$store->add_type("psearch","pobject");
-		$store->add_type("psearch","ppage");
-		$store->add_type("psearch","pdir");
-		$store->add_type("psearch","psearch");
-
 		// install psection type
 
 		$store->add_type("psection", "pobject");
@@ -125,26 +83,6 @@
 		$store->add_type("pproject", "pdir");
 		$store->add_type("pproject", "psection");
 		$store->add_type("pproject", "pproject");
-
-		// install pconnector type
-
-		$store->add_type("pconnector", "pobject");
-		$store->add_type("pconnector", "ppage");
-		$store->add_type("pconnector", "pdir");
-		$store->add_type("pconnector", "pconnector");
-
-		// install pldapconnection type
-
-		$store->add_type("pldapconnection", "pobject");
-		$store->add_type("pldapconnection", "ppage");
-		$store->add_type("pldapconnection", "pdir");
-		$store->add_type("pldapconnection", "pconnector");
-		$store->add_type("pldapconnection", "pldapconnection");
-
-		// install pbookmark type
-
-		$store->add_type("pbookmark", "pobject");
-		$store->add_type("pbookmark", "pbookmark");
 
 		// install punittest type
 		$store->add_type("punittest", "pobject");
