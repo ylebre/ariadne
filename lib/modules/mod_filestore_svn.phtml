@@ -141,11 +141,7 @@
 			return $svn;
 		}
 
-		function get_path(&$svn, $name, $write = false) {
-			if (!$write) {
-				$svn['object_id'] = $this->getObjectId( $svn['object_id'] );
-			}
-			
+		function get_path(&$svn, $name) {
 			$path = $this->make_path($svn['object_id'], $name);
 			return $path;
 		}

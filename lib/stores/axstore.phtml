@@ -73,6 +73,13 @@ class axstore {
 									if ($subcpos = strpos($class, '.')) {
 										$class = substr($class, 0, $subcpos);
 									}
+
+									if (!file_exists($this->code."objects/".$class.".phtml")) {
+										$class = "pobject";
+										$data[1] = "pobject";
+										$data[2] = "pobject";
+									}
+
 									include_once($this->code."objects/".$class.".phtml");
 									// check if this is a link (does the object already exist?)
 
@@ -460,6 +467,11 @@ class axstore {
 			$vtype = $class;
 		}
 		if (!class_exists($class, false)) {
+			if (!file_exists($this->code."objects/".$class.".phtml")) {
+				$class = "pobject";
+				$type = "pobject";
+				$vtype = "pobject";
+			}
 			include_once($this->code."objects/".$class.".phtml");
 		}
 
@@ -548,6 +560,12 @@ class axstore {
 			if ($subcpos = strpos($type, '.')) {
 				$class = substr($type, 0, $subcpos);
 			}
+			if (!file_exists($this->code."objects/".$class.".phtml")) {
+				$class = "pobject";
+				$type = "pobject";
+				$vtype = "pobject";
+			}
+
 			include_once($this->code."objects/".$class.".phtml");
 			$object=new $class;	
 			$object->id=++$this->lastobjectid;
@@ -657,9 +675,9 @@ class axstore {
 	}
 
 	function get_filestore($name) {
-		require_once($this->code."modules/mod_filestore.phtml");
+		require_once($this->code."modules/mod_filestore_ax.phtml");
 		if (!$this->filestores[$name]) {
-			$this->filestores[$name]=new filestore($name, $this->tempdir."/", $this);
+			$this->filestores[$name]=new filestore_ax($name, $this->tempdir."/", $this);
 		}
 		return $this->filestores[$name];
 	}

@@ -205,6 +205,7 @@ class mysqlstore extends store{
 		return $result;
 	}
 
+
 	public function get($path) {
 	/**********************************************************************************
 
@@ -228,6 +229,29 @@ class mysqlstore extends store{
 
 		$query_string="select $nodes_tbl.path, $nodes_tbl.parent, $nodes_tbl.priority, $objects_tbl.id, $objects_tbl.type, $objects_tbl.object, UNIX_TIMESTAMP($objects_tbl.lastchanged) as lastchanged, $objects_tbl.vtype from $objects_tbl, $nodes_tbl where $objects_tbl.id=$nodes_tbl.object and $nodes_tbl.path='$epath'";
 		$result["list"]= $this->store_run_query($query_string);
+		return $result;
+	}
+
+	public function getById($id) {
+	/**********************************************************************************
+
+	 This function takes as argument a path to an object in the store and will retrieve
+	 all the necessary data and return this in the objectlist type needed for 
+	 store->call(). If the requested path does not exist, it will retrieve the object
+	 with the longest matching path.
+
+	 $path should always start and end with a '/'.
+
+	 **********************************************************************************/
+
+		$this->error="";
+		$result["method"]="get";
+		$result["id"]=$id;
+
+		$nodes_tbl=$this->tbl_prefix."nodes";
+		$query_string="select $nodes_tbl.path from $nodes_tbl where $nodes_tbl.object=$id";
+		$qresult = $this->store_run_query($query_string);
+                $result = $qresult->fetch_array(MYSQLI_ASSOC);
 		return $result;
 	}
 	

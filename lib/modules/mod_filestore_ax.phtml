@@ -1,0 +1,491 @@
+<?PHP
+	/**************************************************************************
+	File Store Module
+	---------------------------------------------------------------------------
+
+	filestore($name, $root)
+
+    write($contents, $id, $name)
+
+	read($id, $name, $limit=0, $offset=0)
+
+	show($id, $name)
+
+	exists($id, $name)
+
+	import($fsId, $fsName, $fsLocalVars, $fsObject)
+
+		TODO: make a method to get the function pointer for 
+			  a given template, or even a string with the 'function name'
+			  so we can use a template as a callback function.
+
+	copy_to_store($source, $id, $name="")
+
+	copy_from_store($target, $id, $name="")
+
+	remove($id, $name="")
+
+	is_empty($id)
+
+	copy($id, $name, $newid, $newname)
+
+	copyNode($id, $newid)
+
+	move($id, $newid, $name="", $newname="")
+
+	size($id, $name)
+	
+	purge($id)
+
+    ls($id)
+
+	mtime($id, $name)
+
+	ctime($id, $name)
+
+	touch($id, $name, $time)
+
+	close()
+
+	**************************************************************************/
+
+	define("WRITE",true);
+	define("READ",false);
+	define("PATHTICLESIZE",100);
+	define("DIRMODE",0770);
+	define("FILEMODE",0660);
+
+	class filestore_ax {
+
+		protected $root;
+		protected $name;
+
+
+		/* public */
+
+		public function __construct($name, $root, $store = null) {
+			// initialize filestore
+			$this->name=$name;
+			// make a copy of the store data, not a reference
+			// for security reasons
+			$this->root=$root.$name;
+			// reference to the store
+			$this->store = $store;
+			
+			if (!file_exists($this->root)) {
+				if (!@mkdir($this->root, DIRMODE)) {
+					error("Failed opening filestore $name with root: $root");
+				}
+			}
+		}
+
+		public function getObjectId( $id ) {
+			if (method_exists($this->store, "getNodeByObjectId")) {
+				$node = $this->store->getNodeByObjectId( $id );
+				if ($node['object']) {
+					return $node['object'];
+				}
+			}
+			return $id;
+		}
+
+		public function write($contents, $id, $name) {
+			$result=false;
+			if ($name) {
+				$path=$this->make_path($id, $name, WRITE);
+				$tempfile = tempnam($this->make_path($id),$name.'_temp_');
+				if ($fp=fopen($tempfile, "wb")) {
+					$result=fwrite($fp, $contents);
+					fclose($fp);
+					if($result !== false) {
+						rename($tempfile,$path);
+					}
+				}
+			}
+			return $result;
+		}
+
+		public function read($id, $name, $limit=0, $offset=0) {
+			$result=false;
+			$path=$this->make_path($id, $name);
+			if (file_exists($path))	{
+				if (!$limit) {
+					/*  because of the following note in the php documention
+					    we only give limit as argument when it is not zero
+						 ---
+						 Note: The default value of maxlen is not actually -1;
+						 rather, it is an internal PHP value which means to copy the
+						 entire stream until end-of-file is reached. The only way to
+						 specify this default value is to leave it out of the
+						 parameter list. 
+						 --
+					*/
+					$result=file_get_contents($path,false,null,$offset);
+				} else {
+					$result=file_get_contents($path,false,null,$offset,$limit);
+				}
+			}
+			return $result;
+		}
+
+		public function show($id, $name) {
+			$result=false;
+			$path=$this->make_path($id, $name);
+			if (file_exists($path))	{
+				$result=readfile($path);
+			}
+			return $result;
+		}
+
+		public function exists($id, $name) {
+			return file_exists($this->make_path($id, $name));
+		}
+
+		public function ls($id) {
+			$path=$this->make_path($id);
+			if ($dir=@opendir($path)) {
+				$result=array();
+				while (false !== ($file=readdir($dir))) {
+					if (is_file($path.$file) && $file[0] === '_' ) {
+						$result[]=$this->get_filename($file);
+					}
+				}
+				closedir($dir);
+			} else {
+				$result=false;
+			}
+			return $result;
+		}
+
+		public function templateCodeFunction($code) {
+				$template = 
+				' $local = new ar_core_pinpSandbox($AR_this); '.
+				' ?'.'>'.$code.
+				'<'.'?php ';
+			return $template;
+		}
+
+		public function import($fsId, $fsName) {
+			// first check the cached templates
+			global $ARConfig;
+			if (!isset($ARConfig->fsFunctions[$fsId][$fsName])) {
+				// template isn't in the cache, so define it... as a new function
+				$path=$this->make_path($fsId, $fsName.".inc");
+				if (file_exists($path)) {
+					$arTemplateFunction = ariadne_include_template($path);
+					if(is_callable($arTemplateFunction) ) {
+						$ARConfig->fsFunctions[$fsId][$fsName] = $arTemplateFunction;
+					}
+				}
+			}
+
+			if (isset($ARConfig->fsFunctions[$fsId][$fsName])) {
+				return $ARConfig->fsFunctions[$fsId][$fsName];
+			}
+		}
+
+
+		public function copy_to_store($file, $id, $name="") {
+			$result=false;
+			if (file_exists($file)) {
+				if (is_dir($file)) {
+					$path=$this->make_path($id, "", WRITE);
+					// copy all files, result is number of files
+					$count=0;
+					if ($dir=opendir($file)) {
+						while (false !== ($temp=readdir($dir))) {
+							if (is_file($file.$temp)) {
+								$target=$this->make_path($id, $temp);
+								if( $this->copy_file_to_store($file.$temp, $target) ) {
+									$count++;
+								}
+							}
+						}
+						closedir($dir);
+					}
+					$result=$count;
+				} else {
+					if (!$name) {
+						$name=basename($file);
+					}
+					$path=$this->make_path($id, $name, WRITE);
+					$result = $this->copy_file_to_store($file, $path);
+				}
+			}
+			return $result;
+		}
+
+		public function copy_from_store($target, $id, $name="") {
+			$result=false;
+			if ($name) {
+				$path=$this->make_path($id, $name);
+				if (!file_exists($target) || !is_dir($target)) {
+					$result=@copy($path, $target);
+				} else if (is_dir($target)) {
+					if (substr($target, -1)!="/") {
+						$target.="/";
+					}
+					$target=$target.$name;
+					$result=@copy($path, $target);
+				}
+			} else {
+				if (!file_exists($target)) {
+					mkdir($target);
+				}
+				if (file_exists($target) && (is_dir($target))) {
+					if (substr($target, -1)!="/") {
+						$target.="/";
+					}
+					$count=0;
+					$files=$this->ls($id);
+					if (is_array($files)) {
+						foreach ( $files as $file ) {
+							$source=$this->make_path($id, $file);
+							$result=@copy($source, $target.$file);
+							if ($result) {
+								$count++;
+							}
+						}
+					}
+					$result=$count;
+				}
+			}
+			return $result;
+		}
+
+		public function remove($id, $name) {
+			$path=$this->make_path($id, $name);
+			if (file_exists($path)) {
+				unlink($path);
+				if ($this->is_empty($id)) {
+					$this->rmdir($id);
+				}
+			}
+		}
+
+		public function is_empty($id) {
+			$empty=false;
+			if ($dir=@opendir($this->make_path($id))) {
+				$empty=true;
+				while ($empty && (false !== ($file=readdir($dir)))) {
+					if ($file!="." && $file!="..") {
+						$empty=false;
+					}
+				}
+				closedir($dir);
+			}
+			return $empty;
+		}
+
+		public function purge($id) {
+			$path=$this->make_path($id);
+			if ($dir=@opendir($path)) {
+				$empty=true;
+				while (false !== ($file=readdir($dir))) {
+					if ($file!="." && $file!="..") {
+						if (is_file($path.$file)) {
+							if (!unlink($path.$file)) {
+								$empty=false;
+							}
+						} else {
+							$empty=false;
+						}
+					}
+				}
+				closedir($dir);
+				if ($empty) {
+					$this->rmdir($id);
+				}
+			}
+		}
+
+		public function copy($id, $name, $newid, $newname) {
+			$source=$this->make_path($id, $name);
+			$target=$this->make_path($newid, $newname, WRITE);
+			return copy($source, $target);
+		}
+
+		public function copyNode($id, $newid) {
+			$source=$this->make_path($id);
+			$target=$this->make_path($newid, '', WRITE);
+			$files = $this->ls($id);
+			if (is_array($files)) {
+				foreach ($files as $file) {
+					copy($source."_".$file, $target."_".$file);
+				}
+			}
+		}
+
+		public function move($id, $name, $newid, $newname) {
+			$result=false;
+			$source=$this->make_path($id, $name);
+			$target=$this->make_path($newid, $newname, WRITE);
+
+			$result = rename($source, $target);
+			if($result != true) {
+				if (copy($source, $target)) {
+					$result=unlink($source);
+				}
+			}
+			return $result;
+		}
+
+		public function size($id, $name) {
+			$path=$this->make_path($id, $name);
+			if (file_exists($path)) {
+				$result=filesize($path);
+			} else {
+				$result=false;
+			}
+			return $result;
+		}
+
+		public function mtime($id, $name) {
+			$path=$this->make_path($id, $name);
+			if (file_exists($path)) {
+				$result=filemtime($path);
+			} else {
+				$result=false;
+			}
+			return $result;
+		}
+
+		public function ctime($id, $name) {
+			$path=$this->make_path($id, $name);
+			if (file_exists($path)) {
+				$result=filectime($path);
+			} else {
+				$result=false;
+			}
+			return $result;
+		}
+
+		public function stat($id,$name) {
+			$path=$this->make_path($id, $name);
+			if (file_exists($path)) {
+				$result=stat($path);
+			} else {
+				$result=false;
+			}
+			return $result;
+		}
+
+		public function touch($id, $name, $time) {
+			$path=$this->make_path($id, $name);
+			if (file_exists($path)) {
+				$result=touch($path, $time);
+			} else {
+				$result=false;
+			}
+			return $result;
+		}
+
+		function close() {
+		}
+
+		/*
+			get_stream: returns a readable stream resource
+		*/
+		public function get_stream($id, $name) {
+			$result = false;
+			$path = $this->make_path($id, $name);
+			if (file_exists($path)) {
+				$result=fopen($path, 'r');
+			}
+			return $result;
+		}
+
+		/* 
+			copy_stream_to_store: copy the contents of a stream to a file in the filestore
+			*/
+		public function copy_stream_to_store($stream, $id, $name) {
+			$result = false;
+			$path = $this->make_path($id, $name, WRITE);
+
+			$temp = tempnam(dirname($path), "_temp_");
+			$out = fopen($temp, 'w');
+
+			if ($stream !== false && $out !== false) {
+				$result = stream_copy_to_stream($stream, $out);
+				fclose($out);
+				if ($result !== false) {
+					rename($temp, $path);
+				}
+			}
+			return $result;
+		}
+
+
+		/* private functions */
+
+		public function make_path($id, $name=null, $write=false) {
+			// calculate path based on $id and $name
+			$path=$this->root;
+			if ($write && !file_exists($path) ) {
+				@mkdir($path, DIRMODE); // Supress error, can trigger with race condition.
+			}	
+			while ($id) {
+				$part=$id%PATHTICLESIZE;
+				$path .= '/'. $part;
+				$id=floor($id/PATHTICLESIZE);
+			}
+			if ($write && !file_exists($path)) {
+				@mkdir($path, DIRMODE, true); // Supress error, can trigger with race condition.
+			}
+			$path .= '/';
+			if (isset($name) && $name ) {
+				$path .= '_'.$name;
+			}
+			return $path;
+		}
+
+		protected function get_filename($file) {
+			return substr($file, 1);
+		}
+
+		protected function get_parent_id($id) {
+			$parent=0;
+			$count=0;
+			while ($id) {
+				$next=floor($id/PATHTICLESIZE);
+				$part=$id%PATHTICLESIZE;
+				if ($next) {
+					$parent=$part*(pow(PATHTICLESIZE,$count))+$parent;
+				}
+				$id=$next;
+				$count++;
+			}
+			return $parent;
+		}	
+
+		protected function rmdir($id) {
+			$result=true;
+			if ($this->is_empty($id)) {
+				$path=$this->make_path($id);
+				if (file_exists($path)) {
+					$result=rmdir($path);
+				}
+				$parent=$this->get_parent_id($id);
+				while ($parent) {
+					if ($this->rmdir($parent)) {
+						$parent=$this->get_parent_id($parent);
+					} else {
+						$parent=0;
+					}
+				}
+			} else {
+				$result=false;
+			}
+			return $result;
+		}
+
+		protected function copy_file_to_store($source,$destination) {
+			$temp = tempnam(dirname($destination),"_temp_");
+			$result=copy($source,$temp);
+			if($result !== false) {
+				rename($temp,$destination);
+			}
+			return $result;
+		}
+
+	}

@@ -24,7 +24,7 @@
 	$AR->user->data->login=$ARLogin="admin";
 
 	$ax_config["writeable"]=false;
-	$ax_config["database"]="packages/demo.ax";
+	$ax_config["database"]="packages/lib.ax";
 	// echo "ax file (".$ax_config["database"].")\n";
 	set_time_limit(0);
 	$inst_store = $ax_config["dbms"]."store";
@@ -42,7 +42,7 @@
 	}
 
 	$ax_config["writeable"]=false;
-	$ax_config["database"]="packages/madcat.ax";
+	$ax_config["database"]="packages/demo.ax";
 	// echo "ax file (".$ax_config["database"].")\n";
 	set_time_limit(0);
 	$inst_store = $ax_config["dbms"]."store";

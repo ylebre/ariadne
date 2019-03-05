@@ -1,6 +1,8 @@
 <?php
 	$password = "muze";
 	include("../ariadne.inc");
+	require_once($ariadne."/bootstrap.php");
+
 	include($ariadne."/configs/ariadne.phtml");
 	include($ariadne."/configs/store.phtml");
 	include_once($ariadne."/stores/".$store_config["dbms"]."store.phtml");

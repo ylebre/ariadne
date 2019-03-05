@@ -1,5 +1,5 @@
 <?php
 	$ARversion = array();
-	$ARversion['version'] = '9.7';
-	$ARversion['date'] = strtotime('2016-05-26');
+	$ARversion['version'] = '10-lite';
+	$ARversion['date'] = strtotime('2019-03-05');
 	$ARversion['year'] = strftime('%G', $ARversion['date']);

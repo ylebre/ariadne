@@ -5,7 +5,7 @@
 
 	filestore($name, $root)
 
-    write($contents, $id, $name)
+	write($contents, $id, $name)
 
 	read($id, $name, $limit=0, $offset=0)
 
@@ -37,7 +37,7 @@
 	
 	purge($id)
 
-    ls($id)
+	ls($id)
 
 	mtime($id, $name)
 
@@ -73,17 +73,17 @@
 			$this->store = $store;
 			
 			if (!file_exists($this->root)) {
-				if (!@mkdir($this->root, DIRMODE)) {
+				if (!@mkdir($this->root, DIRMODE, true)) {
 					error("Failed opening filestore $name with root: $root");
 				}
 			}
 		}
 
-		public function getObjectId( $id ) {
-			if (method_exists($this->store, "getNodeByObjectId")) {
-				$node = $this->store->getNodeByObjectId( $id );
-				if ($node['object']) {
-					return $node['object'];
+		public function getObjectPath( $id ) {
+			if (method_exists($this->store, "getById")) {
+				$node = $this->store->getById($id);
+				if ($node['path']) {
+					return $node['path'];
 				}
 			}
 			return $id;
@@ -146,8 +146,8 @@
 			if ($dir=@opendir($path)) {
 				$result=array();
 				while (false !== ($file=readdir($dir))) {
-					if (is_file($path.$file) && $file[0] === '_' ) {
-						$result[]=$this->get_filename($file);
+					if (is_file($path.$file)) {
+						$result[]=$file;
 					}
 				}
 				closedir($dir);
@@ -230,7 +230,7 @@
 				}
 			} else {
 				if (!file_exists($target)) {
-					mkdir($target);
+					@mkdir($target, DIRMODE, true);
 				}
 				if (file_exists($target) && (is_dir($target))) {
 					if (substr($target, -1)!="/") {
@@ -420,27 +420,18 @@
 
 		public function make_path($id, $name=null, $write=false) {
 			// calculate path based on $id and $name
-			$path=$this->root;
-			if ($write && !file_exists($path) ) {
-				@mkdir($path, DIRMODE); // Supress error, can trigger with race condition.
-			}	
-			while ($id) {
-				$part=$id%PATHTICLESIZE;
-				$path .= '/'. $part;
-				$id=floor($id/PATHTICLESIZE);
-			}
+			$path = $this->root;
+			$path .= $this->getObjectPath($id);
+			$path = preg_replace("/\/$/", "", $path); // remove trailing slash, if any;
+
 			if ($write && !file_exists($path)) {
 				@mkdir($path, DIRMODE, true); // Supress error, can trigger with race condition.
 			}
 			$path .= '/';
 			if (isset($name) && $name ) {
-				$path .= '_'.$name;
+				$path .= $name;
 			}
 			return $path;
-		}
-
-		protected function get_filename($file) {
-			return substr($file, 1);
 		}
 
 		protected function get_parent_id($id) {

@@ -9,7 +9,7 @@
 	}
 
 	function check_database_support() {
-		if (check_mysql() || check_postgresql()) {
+		if (check_mysql()) {
 			return true;
 		}
 		return false;
@@ -17,13 +17,6 @@
 
 	function check_mysql() {
 		if(function_exists('mysqli_connect')) {
-			return true;
-		}
-		return false;
-	}
-
-	function check_postgresql() {
-		if (function_exists('pg_connect')) {
 			return true;
 		}
 		return false;
@@ -254,14 +247,9 @@
 		if ($conf && $conf->dbms) {
 			switch ( $conf->dbms ) {
 				case 'mysql':
-				case 'mysql_workspaces':
 					return check_connect_db_mysql($conf);
 				break;
-				case 'postgresql':
-					return check_connect_db_postgresql($conf);
-				break;
 			}
-			// FIXME: Add postgresql checks too
 		}
 		return false;
 	}
@@ -270,11 +258,7 @@
 		if ($conf && $conf->dbms) {
 			switch ( $conf->dbms ) {
 				case 'mysql':
-				case 'mysql_workspaces':
 					return check_select_db_mysql($conf);
-				break;
-				case 'postgresql':
-					return check_select_db_postgresql($conf);
 				break;
 			}
 		}
@@ -285,11 +269,7 @@
 		if ($conf && $conf->dbms) {
 			switch ( $conf->dbms ) {
 				case 'mysql':
-				case 'mysql_workspaces':
 					return check_db_grants_mysql($conf);
-				break;
-				case 'postgresql':
-					return check_db_grants_postgresql($conf);
 				break;
 			}
 		}
@@ -322,19 +302,6 @@
 		return false;
 	}
 
-	function check_db_grants_postgresql($conf) {
-		if ( check_select_db_postgresql($conf) ) {
-			$query = "SELECT has_database_privilege ( '".$conf->database."', 'CREATE' );";
-			$result = pg_query( $query );
-			while ( $row = pg_fetch_row( $result ) ) {
-				if ( $row[0]=='t' ) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-
 	function getConnection($conf){
 		static $dbh;
 		if(!isset($dbh)) {
@@ -351,49 +318,14 @@
 		return true;
 	}
 
-	function check_connect_db_postgresql($conf) {
-		$port = null;
-		$host = $conf->host;
-		if ( strpos($conf->host,':') !== false) {
-			list($host,$port) = explode($conf->host, ':',2);
-		}
-
-		if( $conf->host == ''){
-			$hoststr = '';
-		} else {
-			$hoststr = 'host='.$conf->host;
-		}
-
-		if ($port) {
-			$hoststr = $hoststr .= ' port='.$port;
-		}
-
-		if( $conf->password != '' ){
-			$password = ' password='.$conf->password;
-		}
-
-		$connstring = $hoststr.' dbname='.$conf->database.' user='.$conf->user . ' ' .$password;
-		$conf->connection = pg_connect($connstring);
-		return (bool) $conf->connection;
-	}
-
 	function check_select_db_mysql($conf) {
 		return check_connect_db_mysql($conf); //connect also checks database
 	}
 
-	function check_select_db_postgresql($conf) {
-		return check_connect_db_postgresql($conf); //connect also checks database
-	}
-
-
 	function check_db_is_empty($conf) {
 		switch( $conf->dbms ) {
 			case 'mysql':
-			case 'mysql_workspaces':
 				return check_db_is_empty_mysql($conf);
-			break;
-			case 'postgresql':
-				return check_db_is_empty_postgresql($conf);
 			break;
 		}
 		return false;
@@ -405,17 +337,6 @@
 			$query = "SHOW TABLES;";
 			$result = $dbh->query($query);
 			if (!$dbh->errno && $result->num_rows == 0) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	function check_db_is_empty_postgresql($conf) {
-		if (check_connect_db_postgresql($conf)) {
-			$query = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';";
-			$result = pg_query($conf->connection, $query);
-			if (pg_num_rows($result) == 0) {
 				return true;
 			}
 		}
