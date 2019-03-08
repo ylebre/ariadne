@@ -174,10 +174,9 @@
 <script type="text/javascript" src="<?php echo $yui_base;?>container/container-min.js"></script>
 <script type="text/javascript" src="<?php echo $yui_base;?>autocomplete/autocomplete-min.js"></script>
 
-<link rel="stylesheet" type="text/css" href="<?php echo $AR->dir->styles; ?>explore.css">
+<link rel="stylesheet" type="text/css" href="explore.css">
 <link rel="stylesheet" type="text/css" href="<?php echo $AR->dir->styles; ?>browse.css">
 <link rel="stylesheet" type="text/css" href="<?php echo $AR->dir->styles; ?>wizard.css">
-<!--[if lt IE 7]><link rel="stylesheet" type="text/css" href="<?php echo $AR->dir->styles; ?>explore.ie6.css"><![endif]-->
 
 <script type="text/javascript" src="<?php echo $wwwroot; ?>js/muze.js"></script>
 <script type="text/javascript" src="<?php echo $wwwroot; ?>js/muze/event.js"></script>
@@ -393,7 +392,7 @@
 		<div id="explore_managediv" class="managediv">
 			<div class="browse" id="archildren">
 				<?php
-					$this->get($browsepath, "explore.browse.".$viewmode.".php");
+					$this->get($browsepath, "explore.browse.".$viewmode.".html");
 				?>
 			</div>
 		</div>
