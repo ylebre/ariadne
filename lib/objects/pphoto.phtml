@@ -96,13 +96,10 @@ class pphoto extends pfile { // pphoto class definition
 		return true;
 	}
 
-	function getExif( $sections = false, $arrays = true, $thumbnail = false, $nls = '') {
+	function getExif( $sections = false, $arrays = true, $thumbnail = false) {
 		if (function_exists('exif_read_data')) {
 			$this->pushContext( Array( "arCurrentObject" => $this));
-			$file = "file";
-			$nls = $this->getNlsForFile($file,$nls);
-
-			$file = ar_store_files::get($file, $nls);
+			$file = ar_store_files::get();
 			if ( !ar_error::isError($file)) {
 				$temp = ar_store_files::temp($file);
 				$temp_file_meta  = $temp->getMetaData();
@@ -119,14 +116,11 @@ class pphoto extends pfile { // pphoto class definition
 		return $result;
 	}
 
-	function identify($nls = '') {
+	function identify() {
 		global $AR;
 		$this->pushContext( Array( "arCurrentObject" => $this));
 
-		$file = "file";
-		$nls = $this->getNlsForFile($file,$nls);
-
-		$file = ar_store_files::get($file, $nls);
+		$file = ar_store_files::get();
 		if ( !ar_error::isError($file)) {
 			$temp = ar_store_files::temp($file);
 			$temp_file_meta  = $temp->getMetaData();
@@ -287,7 +281,7 @@ class pphoto extends pfile { // pphoto class definition
 		$this->arComposeStyles[$name]["gravity"]=$gravity;
 	}
 
-	function compose( $target, $style="default", $blend = 0, $params=false, $nls = '') {
+	function compose( $target, $style="default", $blend = 0, $params=false) {
 		global $ARConfig, $ARnls;
 
 		$this->set_context("composite");
@@ -367,10 +361,7 @@ class pphoto extends pfile { // pphoto class definition
 				$targetid = $targetobj->id;
 				if( $targetid ) {
 					$this->pushContext( Array( "arCurrentObject" => $this));
-					$file = "file";
-					$nls = $this->getNlsForFile($file,$nls);
-
-					$file = ar_store_files::get($file, $nls);
+					$file = ar_store_files::get();
 					if ( !ar_error::isError($file)) {
 						$temp = ar_store_files::temp($file);
 						$temp_file_meta  = $temp->getMetaData();
@@ -380,10 +371,8 @@ class pphoto extends pfile { // pphoto class definition
 						$this->popContext();
 
 						$this->pushContext( Array( "arCurrentObject" => $targetobj));
-						$file = "file";
-						$nls = $targetobj->getNlsForFile($file,$nls);
 
-						$target_file = ar_store_files::get($file, $nls);
+						$target_file = ar_store_files::get();
 						if ( !ar_error::isError($target_file)) {
 							$target_temp = ar_store_files::temp($target_file);
 							$target_temp_file_meta  = $target_temp->getMetaData();
@@ -443,10 +432,7 @@ class pphoto extends pfile { // pphoto class definition
 				if($fontobj->CheckLogin("read")) {
 					$this->pushContext( Array( "arCurrentObject" => $this));
 
-					$file = "file";
-					$nls = $this->getNlsForFile($file,$nls);
-
-					$file = ar_store_files::get($file, $nls);
+					$file = ar_store_files::get();
 					if ( !ar_error::isError($file)) {
 						$temp = ar_store_files::temp($file);
 						$temp_file_meta  = $temp->getMetaData();
@@ -538,7 +524,7 @@ class pphoto extends pfile { // pphoto class definition
 	}
 
 
-	function build($nls = '') {
+	function build() {
 		global $AR, $ARConfig, $ARCurrent, $ARnls;
 
 
@@ -552,10 +538,7 @@ class pphoto extends pfile { // pphoto class definition
 			if (!$this->error) {
 				$this->pushContext( Array( "arCurrentObject" => $this));
 
-				$file = "file";
-				$nls = $this->getNlsForFile($file,$nls);
-
-				$file = ar_store_files::get($file, $nls);
+				$file = ar_store_files::get();
 				if(ar_error::isError($file)){
 					// TODO: report an usefull error
 					$this->popContext();
@@ -641,13 +624,10 @@ class pphoto extends pfile { // pphoto class definition
 		unset($ARConfig->photoStack[$this->id]);
 	}
 
-	function getimageinfo(&$extrainfo=false, $nls = '') {
+	function getimageinfo(&$extrainfo=false) {
 
 		$this->pushContext( Array( "arCurrentObject" => $this));
-		$file = "file";
-		$nls = $this->getNlsForFile($file,$nls);
-
-		$file = ar_store_files::get($file, $nls);
+		$file = ar_store_files::get();
 		if ( !ar_error::isError($file)) {
 			$temp = ar_store_files::temp($file);
 			$temp_file_meta  = $temp->getMetaData();
@@ -705,8 +685,8 @@ class pphoto extends pfile { // pphoto class definition
 		return $this->setComposeStyle($name, $method, $width, $height, $xoffset, $yoffset, $percentage, $resize);
 	}
 
-	function _compose( $target, $style="default", $blend = 0, $params = false, $nls = '' ) {
-		return $this->compose( $target, $style, $blend, $params, $nls );
+	function _compose( $target, $style="default", $blend = 0, $params = false ) {
+		return $this->compose( $target, $style, $blend, $params );
 	}
 
 	function _border($width, $height, $color=false) {
@@ -729,8 +709,8 @@ class pphoto extends pfile { // pphoto class definition
 		return $this->interlace($interlace);
 	}
 
-	function _build($nls = '') {
-		return $this->build($nls);
+	function _build() {
+		return $this->build();
 	}
 
 	function _cleanup() {
@@ -741,16 +721,16 @@ class pphoto extends pfile { // pphoto class definition
 		return $this->density($density);
 	}
 
-	function _getimageinfo(&$extrainfo=false, $nls='') {
-			return $this->getimageinfo($extrainfo, $nls);
+	function _getimageinfo(&$extrainfo=false) {
+			return $this->getimageinfo($extrainfo);
 	}
 
-	function _identify($nls = '') {
-		return $this->identify($nls);
+	function _identify() {
+		return $this->identify();
 	}
 
-	function _getExif( $sections = false, $arrays = true, $thumbnail = true, $nls = '') {
-		return $this->getExif( $sections, $arrays, $thumbnail, $nls);
+	function _getExif( $sections = false, $arrays = true, $thumbnail = true) {
+		return $this->getExif( $sections, $arrays, $thumbnail);
 	}
 
 	function _selectFrames() {

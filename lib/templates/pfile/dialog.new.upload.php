@@ -49,21 +49,19 @@
 <fieldset id="data">
 	<legend><?php echo $ARnls["file"]; ?></legend>
 	<div class="field fileinfo">
-		<?php   if ($this->getdata('file_temp', $selectednls)) { ?>
+		<?php   if ($this->getdata('file_temp')) { ?>
 			<div class="left">
 				<label for="file" class="fileinfo">
-					<?php echo htmlentities($this->getdata('file', $selectednls)); ?><br>
-					<?php echo $this->make_filesize($this->getdata('file_size', $selectednls)); ?>
+					<?php echo htmlentities($this->getdata('file')); ?><br>
+					<?php echo $this->make_filesize($this->getdata('file_size')); ?>
 					<br><br>
 				</label>
 			</div>
 			<div class="right">
-				<img class="flag" src="<?php echo $flagurl; ?>" alt="<?php echo $selectedlanguage; ?>">
-				<input id="file" type="file" value="<?php echo $this->getvar($selectednls . "[file]"); ?>" name="<?php echo $selectednls."[file]"; ?>" class="inputline wgWizAutoFocus" onchange="document.getElementById('busy').style.display = 'block'; this.form.submit();">
+				<input id="file" type="file" value="file" name="file" class="inputline wgWizAutoFocus" onchange="document.getElementById('busy').style.display = 'block'; this.form.submit();">
 			</div>
 		<?php	} else { ?>
-			<img class="flag" src="<?php echo $flagurl; ?>" alt="<?php echo $selectedlanguage; ?>">
-			<input id="file" type="file" value="<?php echo $this->getvar($selectednls . "[file]"); ?>" name="<?php echo $selectednls."[file]"; ?>" class="inputline wgWizAutoFocus" onchange="document.getElementById('busy').style.display = 'block'; this.form.submit();">
+			<input id="file" type="file" value="file" name="file" class="inputline wgWizAutoFocus" onchange="document.getElementById('busy').style.display = 'block'; this.form.submit();">
 		<?php	} ?>
 		<!-- input type="submit" name="upload" value="Upload" -->
 	</div>

@@ -19,11 +19,11 @@
 			  a given template, or even a string with the 'function name'
 			  so we can use a template as a callback function.
 
-	copy_to_store($source, $id, $name="")
+	copy_to_store($source, $id, $name=null)
 
-	copy_from_store($target, $id, $name="")
+	copy_from_store($target, $id, $name=null)
 
-	remove($id, $name="")
+	remove($id, $name=null)
 
 	is_empty($id)
 
@@ -31,7 +31,7 @@
 
 	copyNode($id, $newid)
 
-	move($id, $newid, $name="", $newname="")
+	move($id, $newid, $name=null, $newname=null)
 
 	size($id, $name)
 	
@@ -137,12 +137,16 @@
 			return $result;
 		}
 
-		public function exists($id, $name) {
+		public function exists($id, $name=null) {
 			return file_exists($this->make_path($id, $name));
 		}
 
 		public function ls($id) {
 			$path=$this->make_path($id);
+			if (substr($path, -1)!="/") {
+				$path.="/";
+			}
+
 			if ($dir=@opendir($path)) {
 				$result=array();
 				while (false !== ($file=readdir($dir))) {
@@ -185,7 +189,7 @@
 		}
 
 
-		public function copy_to_store($file, $id, $name="") {
+		public function copy_to_store($file, $id, $name=null) {
 			$result=false;
 			if (file_exists($file)) {
 				if (is_dir($file)) {
@@ -205,9 +209,6 @@
 					}
 					$result=$count;
 				} else {
-					if (!$name) {
-						$name=basename($file);
-					}
 					$path=$this->make_path($id, $name, WRITE);
 					$result = $this->copy_file_to_store($file, $path);
 				}
@@ -215,7 +216,7 @@
 			return $result;
 		}
 
-		public function copy_from_store($target, $id, $name="") {
+		public function copy_from_store($target, $id, $name=null) {
 			$result=false;
 			if ($name) {
 				$path=$this->make_path($id, $name);
@@ -279,6 +280,8 @@
 
 		public function purge($id) {
 			$path=$this->make_path($id);
+			$path.="/";
+
 			if ($dir=@opendir($path)) {
 				$empty=true;
 				while (false !== ($file=readdir($dir))) {
@@ -307,11 +310,22 @@
 
 		public function copyNode($id, $newid) {
 			$source=$this->make_path($id);
-			$target=$this->make_path($newid, '', WRITE);
+			$target=$this->make_path($newid);
+			if (!file_exists($target)) {
+				@mkdir($target, DIRMODE, true);
+			}
+			if (substr($source, -1)!="/") {
+				$source.="/";
+			}
+			if (substr($target, -1)!="/") {
+				$target.="/";
+			}
+
 			$files = $this->ls($id);
+
 			if (is_array($files)) {
 				foreach ($files as $file) {
-					copy($source."_".$file, $target."_".$file);
+					copy($source.$file, $target.$file);
 				}
 			}
 		}
@@ -386,7 +400,7 @@
 		/*
 			get_stream: returns a readable stream resource
 		*/
-		public function get_stream($id, $name) {
+		public function get_stream($id, $name=null) {
 			$result = false;
 			$path = $this->make_path($id, $name);
 			if (file_exists($path)) {
@@ -424,12 +438,13 @@
 			$path .= $this->getObjectPath($id);
 			$path = preg_replace("/\/$/", "", $path); // remove trailing slash, if any;
 
-			if ($write && !file_exists($path)) {
-				@mkdir($path, DIRMODE, true); // Supress error, can trigger with race condition.
-			}
-			$path .= '/';
-			if (isset($name) && $name ) {
+			if (isset($name)) {
+				$path .= '/';
 				$path .= $name;
+			}
+
+			if ($write && !file_exists($path)) {
+				@mkdir(dirname($path), DIRMODE, true); // Supress error, can trigger with race condition.
 			}
 			return $path;
 		}

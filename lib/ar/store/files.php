@@ -35,54 +35,44 @@
 			if ( !$files ) {
 				$files = array();
 			}
-			$files = array_map( array('self','parseName'), $files );
-			if ( isset($nls) ) {
-				$files = array_filter( $files, function($f) use($nls) {
-					return ( $f['nls'] == $nls );
-				} );
-			}
 			return $files;
 		}
 
-		public static function get( $name, $nls=null ) {
-			$info = static::exists($name, $nls);
+		public static function get() {
+			$info = static::exists();
 			if ( !$info ) {
 				return ar_error::raiseError('File not found: '.$name.' - '.$nls, 404);
 			}
 			list( $ob, $fstore ) = static::getStore();
-			$fname = static::compileName($info['name'], $info['nls']);
-			$stream = $fstore->get_stream($ob->id, $fname);
+			$stream = $fstore->get_stream($ob->id);
 			return new ar_content_filesFile( $stream );
 		}
 
-		public static function save( $name, $contents, $nls=null ) {
+		public static function save( $name, $contents ) {
 			list( $ob, $fstore ) = static::getStore();
-			$fname = static::compileName($name, $nls);
 			if( $contents instanceof ar_content_filesFile ){
 				// FIXME: this should be more efficient then coping the whole contents of the file in memory
 				// should be fixed with a copyFrom/copyTo function call on ar_content_filesFile
 				$contents = $contents->getContents();
 			}
 			if ( is_resource($contents) && get_resource_type($contents)==='stream' ) {
-				return $fstore->copy_stream_to_store( $contents, $ob->id, $fname );
+				return $fstore->copy_stream_to_store( $contents, $ob->id );
 			} else {
-				return $fstore->write( (string) $contents, $ob->id, $fname );
+				return $fstore->write( (string) $contents, $ob->id );
 			}
 		}
 
-		public static function delete( $name, $nls=null ) {
+		public static function delete() {
 			list( $ob, $fstore ) = static::getStore();
-			$fname = static::compileName($name, $nls);
-			if ( $fstore->exists( $ob->id, $fname ) ) {
-				return $fstore->remove( $ob->id, $fname );
+			if ( $fstore->exists( $ob->id ) ) {
+				return $fstore->remove( $ob->id );
 			}
 			return false;
 		}
 
-		public static function touch( $name, $time=null, $nls=null ) {
+		public static function touch( $time=null ) {
 			list( $ob, $fstore ) = static::getStore();
-			$fname = static::compileName($name, $nls);
-			return $fstore->touch( $ob->id, $fname, $time );
+			return $fstore->touch( $ob->id, null, $time );
 		}
 
 		public static function temp( $contents=null ) {
@@ -115,17 +105,11 @@
 			}
 		}
 
-		public static function exists( $name, $nls=null ) {
+		public static function exists() {
 			list( $ob, $fstore ) = static::getStore();
-			$fname = static::compileName($name, $nls);
-			if ( !$fstore->exists($ob->id, $fname) && !isset($nls) ) {
-				$nls = $ob->data->nls->default;
-				$fname = static::compileName($name, $nls);
-			}
-			if ( !$fstore->exists($ob->id, $fname ) ) {
+			if ( !$fstore->exists($ob->id) ) {
 				return false;
 			}
-			return static::parseName($fname);
+			return true;
 		}
-
 	}

@@ -80,136 +80,77 @@
 				$properties = array('fulltext' => $properties['fulltext']);
 
 				$this->arIsNewObject = false;
-				foreach ($nlslist as $nlskey) {
-					$fulltext = $properties['fulltext'];
 
-					$tempfile = $this->getdata("file_temp", $nlskey);
-					$mimetype = $this->getdata("mimetype", $nlskey);
-					$file_type = $this->getdata("file_type", $nlskey);
-					$file_size = $this->getdata("file_size", $nlskey);
-					if ( $nlskey == $ARConfig->nls->default ) {
-						// backwards compatible - handle file uploads without language
-						if ( !$tempfile ) {
-							$tempfile = $this->getdata("file_temp", "none");
-						}
-						if ( !$mimetype ) {
-							$mimetype = $this->getdata("mimetype", "none");
-						}
-						if ( !$file_type ) {
-							$file_type = $this->getdata("file_type", "none");
-						}
-						if ( !$file_size ) {
-							$file_size = $this->getdata("file_size", "none");
-						}
-					}
-					if (!$mimetype) {
-						$mimetype = $file_type;
-					}
+				$fulltext = $properties['fulltext'];
 
-					$deletefile = $this->getdata("delete", $nlskey);
+				$tempfile = $this->getdata("file_temp", "none");
+				$mimetype = $this->getdata("mimetype", "none");
+				$file_type = $this->getdata("file_type", "none");
+				$file_size = $this->getdata("file_size", "none");
 
-					if ($mimetype && !$deletefile){
-						$armime = explode("/", $mimetype);
+				if (!$mimetype) {
+					$mimetype = $file_type;
+				}
 
-						$this->data->$nlskey->mimetype = $mimetype;
-						$this->data->$nlskey->mime["type"] = $armime[0];
-						$this->data->$nlskey->mime["subtype"] = $armime[1];
+				if ($mimetype && !$deletefile){
+					$armime = explode("/", $mimetype);
 
-						$properties["mimetype"][] = array(
-							"type"    => $armime[0],
-							"subtype" => $armime[1],
-						);
+					$this->data->mimetype = $mimetype;
+					$this->data->mime["type"] = $armime[0];
+					$this->data->mime["subtype"] = $armime[1];
 
-						if ($nlskey == $ARConfig->nls->default) {
-							$this->data->mimetype = $mimetype;
-							$this->data->mime["type"] = $armime[0];
-							$this->data->mime["subtype"] = $armime[1];
-						}
-					}
+					$properties["mimetype"][] = array(
+						"type"    => $armime[0],
+						"subtype" => $armime[1],
+					);
+				}
 
-					// now check whether $file_temp is defined, if so, move it
-					if (!$this->error) {
-						if ($tempfile && !$deletefile) {
-							$tempfile=preg_replace("|[\\\/]|","",$tempfile); // make sure nobody gets /etc/passwd
-							$tempfile=$this->store->get_config("files")."temp/".$tempfile;
+				// now check whether $file_temp is defined, if so, move it
+				if (!$this->error) {
+					if ($tempfile && !$deletefile) {
+						$tempfile=preg_replace("|[\\\/]|","",$tempfile); // make sure nobody gets /etc/passwd
+						$tempfile=$this->store->get_config("files")."temp/".$tempfile;
 
-							if (file_exists($tempfile)) {
-								$files = $this->store->get_filestore("files");
-
-								$checksize=getimagesize($tempfile);
-								if ($checksize) {
-									$pixelsize=$checksize[0]*$checksize[1];
-									if ($AR->IM->hardLimit && ($pixelsize>$AR->IM->hardLimit)) {
-										// FIXME: generate error: picture too large
-										// problem: error message displays back button, but object is already saved,
-										// next save action will trigger 'object already exists'.
-										// $this->error=sprintf($ARnls["err:imagetoolarge"],$AR->IM->hardLimit.' Pixels');
-										$this->data->toolarge=true;
-									} else if ($AR->IM->softLimit && ($pixelsize>$AR->IM->softLimit)) {
-										$this->data->toolarge=false;
-										// generate smaller version, use that as default
-										$resizeFactor=sqrt($AR->IM->softLimit/($checksize[0]*$checksize[1]));
-										$newx=floor($resizeFactor*$checksize[0]);
-										$newy=floor($resizeFactor*$checksize[1]);
-										system($AR->IM->convert." -size ".$newx."x".$newy." ".$tempfile." -resize ".$newx."x".$newy." ".$tempfile.".scaled");
-										$originalfile=$tempfile;
-										$tempfile=$tempfile.'.scaled';
-										$files->copy_to_store($originalfile, $this->id, $nlskey."_file.original");
-										@unlink($originalfile);
-									} else {
-										$this->data->toolarge=false;
-									}
-								} else {
-									// FIXME: if getimagesize fails, check filesize
-									if ($AR->IM->hardLimitBytes && filesize($tempfile)>$AR->IM->hardLimitBytes) {
-										// $this->error=sprintf($ARnls["err:imagetoolarge"],$AR->IM->hardLimitBytes.' Bytes');
-										$this->data->toolarge=true;
-									} else {
-										$this->data->toolarge=false;
-									}
-								}
-
-								$files->copy_to_store($tempfile, $this->id, $nlskey."_file");
-								$files->remove($this->id, $nlskey."_file_plaintext");
-								$this->data->$nlskey->filesize = $file_size;
-
-								// backwards compatibility, set defaultnls values in the nonenls version of data
-								if ($nlskey == $ARConfig->nls->default) {
-									$this->data->filesize = $file_size;
-								}
-								@unlink($tempfile);
-
-							}
-						} 
-
-						if ($this->store->is_supported("fulltext")) {
-							$filetext = $this->GetPlainText("file", $nlskey);
-							if ($filetext) {
-								$count++;
-								$properties["fulltext"] = $fulltext;
-								$properties["fulltext"][$count]["nls"]=$nlskey;
-								$properties["fulltext"][$count]["value"]=$this->store->format_for_fti(
-									$filetext
-								);
-							}
-						}
-
-						if ($deletefile) {
+						if (file_exists($tempfile)) {
 							$files = $this->store->get_filestore("files");
-							$files->remove($this->id, $nlskey."_file");
-							$files->remove($this->id, $nlskey."_file_plaintext");
-							unset($this->data->$nlskey->filesize);
-							unset($this->data->$nlskey->mimetype);
 
-							foreach ($properties["fulltext"] as $count => $property) {
-								if ($property['nls'] == $nlskey) {
-									unset($properties["fulltext"][$count]);
+							$checksize=getimagesize($tempfile);
+							if ($checksize) {
+								$pixelsize=$checksize[0]*$checksize[1];
+								if ($AR->IM->hardLimit && ($pixelsize>$AR->IM->hardLimit)) {
+									// FIXME: generate error: picture too large
+									// problem: error message displays back button, but object is already saved,
+									// next save action will trigger 'object already exists'.
+									// $this->error=sprintf($ARnls["err:imagetoolarge"],$AR->IM->hardLimit.' Pixels');
+									$this->data->toolarge=true;
+								} else if ($AR->IM->softLimit && ($pixelsize>$AR->IM->softLimit)) {
+									$this->data->toolarge=false;
+									// generate smaller version, use that as default
+									$resizeFactor=sqrt($AR->IM->softLimit/($checksize[0]*$checksize[1]));
+									$newx=floor($resizeFactor*$checksize[0]);
+									$newy=floor($resizeFactor*$checksize[1]);
+									system($AR->IM->convert." -size ".$newx."x".$newy." ".$tempfile." -resize ".$newx."x".$newy." ".$tempfile.".scaled");
+									$originalfile=$tempfile;
+									$tempfile=$tempfile.'.scaled';
+									@unlink($originalfile);
+								} else {
+									$this->data->toolarge=false;
+								}
+							} else {
+								// FIXME: if getimagesize fails, check filesize
+								if ($AR->IM->hardLimitBytes && filesize($tempfile)>$AR->IM->hardLimitBytes) {
+									// $this->error=sprintf($ARnls["err:imagetoolarge"],$AR->IM->hardLimitBytes.' Bytes');
+									$this->data->toolarge=true;
+								} else {
+									$this->data->toolarge=false;
 								}
 							}
-							if ($tempfile) {
-								@unlink($tempfile);
-							}
-						}
+
+							$files->copy_to_store($tempfile, $this->id);
+							$this->data->filesize = $file_size;
+
+							@unlink($tempfile);
+						} 
 					} else {
 						debug("err: $this->error","all");
 						break;

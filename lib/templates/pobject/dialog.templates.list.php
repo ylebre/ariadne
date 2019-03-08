@@ -150,6 +150,7 @@
 		$grepresults = false;
 		if( $search != "" ) {
 			$templates_path = $filestore->make_path($this->id);
+			$templates_path .= "/";
 			$esc_search = escapeshellarg($search);
 			$greps = array();
 
@@ -158,7 +159,7 @@
 			foreach ($greps as $grep) {
 				list($file, $linenr, $line)=explode(":", $grep, 3);
 				$file=substr($file, strrpos($file, '/'));
-				$file=substr($file, 2);
+				$file=substr($file, 1);
 				$file = substr($file, 0, strrpos($file, '.'));
 				if( !is_array($grepresults[$file])) {
 					$grepresults[$file] = array();

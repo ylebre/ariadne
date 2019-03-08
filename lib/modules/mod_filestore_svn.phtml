@@ -143,6 +143,9 @@
 
 		function get_path(&$svn, $name) {
 			$path = $this->make_path($svn['object_id'], $name);
+			if (!$name || $name == "") {
+				$path .= "/";
+			}
 			return $path;
 		}
 
@@ -543,13 +546,12 @@
 						$result = array();
 						$tempresult = $tempresult['target'][0]['entry'];
 						foreach ($tempresult as $key=>$value) {
-							$filename = basename($value['path']);
-							if ($filename[0] === '_') {
-								$filename = substr($filename, 1);
-								$result[$filename] = $value;
-							} else if ( $matchpath === $value['path'] ) {
+							if ( $matchpath === $value['path'] ) {
 								// dir entry
 								$result[''] = $value;
+							} else {
+								$filename = basename($value['path']);
+								$result[$filename] = $value;
 							}
 						}
 						return $result;

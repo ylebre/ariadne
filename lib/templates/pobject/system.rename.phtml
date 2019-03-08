@@ -43,8 +43,32 @@
 					if (current($this->get($parent, "system.check.grant.phtml", array("grant"=>"add", "modifier"=>$this->type)))) {
 
 						$this->find($this->path, "", "system.update.user.grants.phtml", array("action"=>"delete"));
-						
+
+						$source = $this->path;						
 						$target = $this->store->move($this->path, $eventData->arTarget);
+
+						if ($target) {
+							// now move the templates for the new object
+							if ($this->data->config->pinp) {
+								$templates=$this->store->get_filestore("templates");
+								$templates->move( $source, null, $target, null);
+								while (list($type, $values)=each($data->config->pinp)) {
+									while (list($function, $templatelist)=each($values)) {
+										while (list($language, $id)=each($templatelist)) {
+											$template=$type.".".$function.".".$language;
+											$this->data->config->pinp[$type][$function][$language]=$this->id;
+
+											if ($this->data->config->templates[$type][$function][$language]) {
+												$this->data->config->templates[$type][$function][$language]=$this->id;
+											}
+										}
+									}
+								}
+							}
+
+							$files=$this->store->get_filestore("files");
+							$files->move( $source, null, $target, null);
+						}
 
 						if ( $target ) {
 							$this->path=$target;

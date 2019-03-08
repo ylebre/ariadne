@@ -24,26 +24,5 @@
 
 	ldHeader("X-Ariadne-401: ".$arLoginMessage);
 
-	if ($this->CheckConfig($arCallFunction, $arCallArgs)) {
-?>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"> 
-<html>
-	<head>
-		<title>Ariadne - <?php echo $arLoginMessage; ?></title>
-		<link href='//fonts.googleapis.com/css?family=Abel|Montserrat' rel='stylesheet' type='text/css'>
-		<link rel="stylesheet" type="text/css" href="<?php echo $AR->dir->styles; ?>login.css">
-		<meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
-		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<script type="text/javascript">
-			window.onload = function() { document.getElementById("ARLogin").focus(); }			
-		</script>
-	</head>
-<body id="login_panel">
-<?php
-	$this->call("user.login.form.html", $arCallArgs);
-?>
-</body>
-</html>
-<?php
-	}
+	$this->CheckConfig($arCallFunction, $arCallArgs);
 ?>

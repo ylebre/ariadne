@@ -79,112 +79,50 @@
 				$properties = array('fulltext' => $properties['fulltext']);
 
 				$this->arIsNewObject = false;
-				foreach ($nlslist as $nlskey) {
-					$fulltext = $properties['fulltext'];
 
-					$tempfile = $this->getdata("file_temp", $nlskey);
-					$mimetype = $this->getdata("mimetype", $nlskey);
-					$file_type = $this->getdata("file_type", $nlskey);
-					$file_size = $this->getdata("file_size", $nlskey);
-					if ( $nlskey == $ARConfig->nls->default ) {
-						// backwards compatible - handle file uploads without language
-						if ( !$tempfile ) {
-							$tempfile = $this->getdata("file_temp", "none");
-						}
-						if ( !$mimetype ) {
-							$mimetype = $this->getdata("mimetype", "none");
-						}
-						if ( !$file_type ) {
-							$file_type = $this->getdata("file_type", "none");
-						}
-						if ( !$file_size ) {
-							$file_size = $this->getdata("file_size", "none");
-						}
-					}
+				$tempfile = $this->getdata("file_temp");
+				$mimetype = $this->getdata("mimetype");
+				$file_type = $this->getdata("file_type");
+				$file_size = $this->getdata("file_size");
 
-					if (!$mimetype) {
-						$mimetype = $file_type;
-					}
+				if (!$mimetype) {
+					$mimetype = $file_type;
+				}
 
-					if (!isset($this->data->$nlskey)) {
-						$this->data->$nlskey = new baseObject;
-					}
+				if ($mimetype){
+					$armime = explode("/", $mimetype);
 
-					$deletefile = $this->getdata("delete", $nlskey);
+					$this->data->mimetype = $mimetype;
+					$this->data->mime["type"] = $armime[0];
+					$this->data->mime["subtype"] = $armime[1];
 
-					if ($mimetype && !$deletefile){
-						$armime = explode("/", $mimetype);
+					$properties["mimetype"][] = array(
+						"type"    => $armime[0],
+						"subtype" => $armime[1],
+					);
 
-						$this->data->$nlskey->mimetype = $mimetype;
-						$this->data->$nlskey->mime["type"] = $armime[0];
-						$this->data->$nlskey->mime["subtype"] = $armime[1];
+					$this->data->mimetype = $mimetype;
+					$this->data->mime["type"] = $armime[0];
+					$this->data->mime["subtype"] = $armime[1];
+				}
 
-						$properties["mimetype"][] = array(
-							"type"    => $armime[0],
-							"subtype" => $armime[1],
-						);
+				// now check whether $file_temp is defined, if so, move it
+				if (!$this->error) {
+					if ($tempfile) {
+						$tempfile=preg_replace("|[\\\/]|","",$tempfile); // make sure nobody gets /etc/passwd
+						$tempfile=$this->store->get_config("files")."temp/".$tempfile;
 
-						if ($nlskey == $ARConfig->nls->default) {
-							$this->data->mimetype = $mimetype;
-							$this->data->mime["type"] = $armime[0];
-							$this->data->mime["subtype"] = $armime[1];
-						}
-					}
-
-					// now check whether $file_temp is defined, if so, move it
-					if (!$this->error) {
-						if ($tempfile && !$deletefile) {
-							$tempfile=preg_replace("|[\\\/]|","",$tempfile); // make sure nobody gets /etc/passwd
-							$tempfile=$this->store->get_config("files")."temp/".$tempfile;
-
-							if (file_exists($tempfile)) {
-								$files = $this->store->get_filestore("files");
-
-								$files->copy_to_store($tempfile, $this->id, $nlskey."_file");
-								$files->remove($this->id, $nlskey."_file_plaintext");
-								$this->data->$nlskey->filesize = $file_size;
-
-								// backwards compatibility, set defaultnls values in the nonenls version of data
-								if ($nlskey == $ARConfig->nls->default) {
-									$this->data->filesize = $file_size;
-								}
-								@unlink($tempfile);
-
-							}
-						}
-
-						if ($this->store->is_supported("fulltext")) {
-							$filetext = $this->GetPlainText("file", $nlskey);
-							if ($filetext) {
-								$count++;
-								$properties["fulltext"] = $fulltext;
-								$properties["fulltext"][$count]["nls"]=$nlskey;
-								$properties["fulltext"][$count]["value"]=$this->store->format_for_fti(
-									$filetext
-								);
-							}
-						}
-
-						if ($deletefile) {
+						if (file_exists($tempfile)) {
 							$files = $this->store->get_filestore("files");
-							$files->remove($this->id, $nlskey."_file");
-							$files->remove($this->id, $nlskey."_file_plaintext");
-							unset($this->data->$nlskey->filesize);
-							unset($this->data->$nlskey->mimetype);
 
-							foreach ($properties["fulltext"] as $count => $property) {
-								if ($property['nls'] == $nlskey) {
-									unset($properties["fulltext"][$count]);
-								}
-							}
-							if ($tempfile) {
-								@unlink($tempfile);
-							}
+							$files->copy_to_store($tempfile, $this->id);
+							$this->data->filesize = $file_size;
+							@unlink($tempfile);
 						}
-					} else {
-						debug("err: $this->error","all");
-						break;
 					}
+				} else {
+					debug("err: $this->error","all");
+					break;
 				}
 				if (!$this->error) {
 					$arResult = $this->save($properties);

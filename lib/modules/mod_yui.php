@@ -7,6 +7,48 @@
 		static public function _getSection( $section ) {
 			return yui::getSection( $section );
 		}
+		static public function _section_table($info) {
+			return yui::section_table($info);
+		}
+		static public function _labelspan($label, $maxlabellength=16) {
+			return yui::labelspan($label, $maxlabellength);
+		}
+		static public function _yui_menuitems($menuitems, $menuname, $menuid='') {
+			return yui::yui_menuitems($menuitems, $menuname, $menuid);
+		}
+		static public function _showPaging($total, $items_per_page, $current_page, $pagingclass="") {
+			return yui::showPaging($total, $items_per_page, $current_page, $pagingclass);
+		}
+		static public function _showList($data, $viewtype='list') {
+			return yui::showList($data, $viewtype);
+		}
+		static public function _showTable($divId, $tableId, $columnDefs, $data) {
+			return yui::showTable($divId, $tableId, $columnDefs, $data);
+		}
+		static public function _showTableJs($divId, $tableId, $columnDefs) {
+			return yui::showTableJs($divId, $tableId, $columnDefs);
+		}
+		static public function _getSvnIcon($status) {
+			return yui::getSvnIcon($status);
+		}
+		static public function _getTypeIcon($item, $viewtype='list') {
+			return yui::getTypeIcon($item, $viewtype);
+		}
+		static public function _getSectionContent($settings) {
+			return yui::getSectionContent($settings);
+		}
+		static public function _layout_sortfunc($a, $b) {
+			return yui::layout_sortfunc($a, $b);
+		}
+		static public function _colDefs($fields) {
+			return yui::colDefs($fields);
+		}
+		static public function _getTypes($arObject, $showall) {
+			return yui::getTypes($arObject, $showall);
+		}
+		static public function _checkType($arObject, $type, $name, $currentpath, $arReturnTemplate) {
+			return yui::checkType($arObject, $type, $name, $currentpath, $arReturnTemplate);
+		}
 	}
 
 	class yui {

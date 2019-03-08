@@ -309,41 +309,6 @@ abstract class ariadne_object extends baseObject { // ariadne_object class defin
 		return $this->store->count($this->store->ls($path));
 	}
 
-	private function saveMergeWorkflowResult($properties, $wf_result) {
-		foreach ($wf_result as $wf_prop_name => $wf_prop) {
-			foreach ($wf_prop as $wf_prop_index => $wf_prop_record) {
-				if (!isset($wf_prop_record)) {
-					unset($properties[$wf_prop_name][$wf_prop_index]);
-				} else {
-					$record = array();
-					foreach ($wf_prop_record as $wf_prop_field => $wf_prop_value) {
-						switch (gettype($wf_prop_value)) {
-							case "integer":
-							case "boolean":
-							case "double":
-								$value = $wf_prop_value;
-								break;
-							default:
-								$value = $wf_prop_value;
-								// backwards compatibility, store will do the escaping from now on
-								// will be removed in the future
-								if (substr($wf_prop_value, 0, 1) === "'" && substr($wf_prop_value, -1) === "'"
-										&& "'".AddSlashes(StripSlashes(substr($wf_prop_value, 1, -1)))."'" == $wf_prop_value) {
-									$value = stripSlashes(substr($wf_prop_value,1,-1));
-									// todo add deprecated warning
-								}
-
-						}
-						$record[$wf_prop_field] = $value;
-					}
-					$properties[$wf_prop_name][] = $record;
-				}
-			}
-		}
-
-		return $properties;
-	}
-
 	/*
 		saves custom data
 		returns properties for custom data
@@ -485,27 +450,15 @@ abstract class ariadne_object extends baseObject { // ariadne_object class defin
 			return false; // prevent saving of the object.
 		}
 
-		// arguments can be altered by event handlers, only usefull when a workflow template is also defined
+		// arguments can be altered by event handlers;
 		$arCallArgs = $eventData->arCallArgs;
 
 		// the properties from the eventData are the new property list
 		// no need to merge them with $properties, just manipulate the properties array directly
-		// in the event data. unlike the user.workflow.pre.html template
 		if (isset( $eventData->arProperties ) && is_array( $eventData->arProperties ) ) {
 			$properties = $eventData->arProperties;
 		} else {
 			$properties = array();
-		}
-
-		// pass the current properties list to the workflow template
-		// for backwards compatibility and workflow templates that just
-		// returned only their own properties, merge them afterwards
-		// don't do this for the eventData arProperties!
-		$arCallArgs['properties'] = $properties;
-		$wf_result = $wf_object->call("user.workflow.pre.html", $arCallArgs);
-		/* merge workflow properties */
-		if (isset($wf_result) && is_array($wf_result) ){
-			$properties = $this->saveMergeWorkflowResult($properties,$wf_result);
 		}
 
 		$this->error = $wf_object->error;
@@ -538,27 +491,9 @@ abstract class ariadne_object extends baseObject { // ariadne_object class defin
 
 				$config=$this->data->config; // need to set it again, to copy owner config data
 
-				$wf_object = $this->store->newobject($this->path, $this->parent, $this->type, $this->data, $this->id, $this->lastchanged, $this->vtype, 0, $this->priority);
-				$arCallArgs = $eventData->arCallArgs; // returned from onbeforesave event
-				$arCallArgs['properties'] = $properties;
-
-				if ($arIsNewObject) {
-					$wf_object->arIsNewObject = $arIsNewObject;
-				}
-				$wf_result = $wf_object->call("user.workflow.post.html", $arCallArgs);
-				$this->error = $wf_object->error;
-				$this->priority = $wf_object->priority;
-				$this->data = $wf_object->data;
-				$this->data->config = $config;
-				/* merge workflow properties */
-
-				if (isset($wf_result) && is_array($wf_result) ){
-					$properties = $this->saveMergeWorkflowResult($properties,$wf_result);
-
-					if (!$this->store->save($this->path, $this->type, $this->data, $properties, $this->vtype, $this->priority)) {
-						$this->error = ar::error( ''.$this->store->error, 1108, $this->store->error);
-						$result = false;
-					}
+				if (!$this->store->save($this->path, $this->type, $this->data, $properties, $this->vtype, $this->priority)) {
+					$this->error = ar::error( ''.$this->store->error, 1108, $this->store->error);
+					$result = false;
 				}
 				// all save actions have been done, fire onsave.
 				$this->data->config = $config;
@@ -614,15 +549,18 @@ abstract class ariadne_object extends baseObject { // ariadne_object class defin
 		if ( !$eventData ) {
 			return false;
 		}
-		$this->call("user.workflow.delete.pre.html", $eventData->arCallArgs);
-		if (!$this->error) {
-			if ($this->store->delete($this->path)) {
-				$result = true;
-				$this->call("user.workflow.delete.post.html", $eventData->arCallArgs);
-				ar_events::fire( 'ondelete', $eventData );
-			} else {
-				$this->error = ar::error( ''.$this->store->error, 1107, $this->store->error);
-			}
+
+		$this->pushContext( Array( "arCurrentObject" => $this));
+		$res = ar_store_files::delete();
+
+		$templates=$this->store->get_filestore("templates");
+		$templates->purge($this->id);
+
+		if ($this->store->delete($this->path)) {
+			$result = true;
+			ar_events::fire( 'ondelete', $eventData );
+		} else {
+			$this->error = ar::error( ''.$this->store->error, 1107, $this->store->error);
 		}
 		return $result;
 	}
@@ -898,6 +836,10 @@ abstract class ariadne_object extends baseObject { // ariadne_object class defin
 			return false;
 		}
 		return true;
+	}
+
+	public function _can_mogrify() {
+		return $this->can_mogrify();
 	}
 
 	public function load_properties($scope='') {
@@ -3412,20 +3354,33 @@ abstract class ariadne_object extends baseObject { // ariadne_object class defin
 
 	public function _getSetting($setting) {
 	global $AR;
+	global $ARCurrent;
 
 		switch ($setting) {
 			case 'www':
 			case 'dir:www':
 				return $AR->dir->www;
+			break;
 			case 'images':
 			case 'dir:images':
 				return $AR->dir->images;
+			break;
+			case 'styles':
+			case 'dir:styles':
+				return $AR->dir->styles;
+			break;
 			case 'ARSessionKeyCheck':
 				$result = null;
 				if (function_exists('ldGenerateSessionKeyCheck')) {
 					$result = ldGenerateSessionKeyCheck();
 				}
 				return $result;
+			break;
+			case 'sessionid':
+				return $ARCurrent->session->id;
+			break;
+			case 'root':
+				return $AR->root;
 			break;
 			case 'nls:list':
 				return $AR->nls->list;
@@ -3435,6 +3390,9 @@ abstract class ariadne_object extends baseObject { // ariadne_object class defin
 			break;
 			case 'svn':
 				return $AR->SVN->enabled;
+			break;
+			case 'loader':
+				return $this->store->get_config('root');
 			break;
 		}
 	}

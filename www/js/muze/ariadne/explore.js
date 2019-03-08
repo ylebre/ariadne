@@ -607,7 +607,7 @@ muze.namespace( 'muze.ariadne.explore.toolbar', function() {
 			muze.ariadne.explore.arshow('dialog_search', muze.ariadne.registry.get('store_root')+muze.ariadne.registry.get('path')+'dialog.search.php');
 		},
 		load : function(path) {
-			var sUrl = muze.ariadne.registry.get('store_root')+path+'explore.toolbar.php';
+			var sUrl = muze.ariadne.registry.get('store_root')+path+'explore.toolbar.html';
 			var fadeOut = new YAHOO.util.Anim("explore_top", { opacity: {to: 0.3}}, 0.1);
 			fadeOut.animate();
 			var fadeIn = function() {
@@ -755,11 +755,11 @@ muze.namespace( 'muze.ariadne.explore.sidebar', function() {
 			if (!muze.ariadne.explore.viewable(path)) { return }
 
 			muze.ariadne.explore.sidebar.currentpath = path;
-			var template = 'explore.sidebar.php';
+			var template = 'explore.sidebar.html';
 			
 			var selected = YAHOO.util.Dom.getElementsByClassName("selectable-selected", "*", "archildren");
 			if (selected.length > 1) {
-				template = 'explore.sidebar.multiple.php';
+				template = 'explore.sidebar.multiple.html';
 			}
 			
 			var sUrl = muze.ariadne.registry.get('store_root')+path+template;
@@ -1058,7 +1058,7 @@ muze.namespace( 'muze.ariadne.explore.viewpane', function() {
 			if (!viewmode) {
 				viewmode='list';
 			}
-			var url = browse_template+viewmode+'.php?'+qs+'&'+document.location.search;
+			var url = browse_template+viewmode+'.html?'+qs+'&'+document.location.search;
 			muze.ariadne.explore.viewpane.browseto(url);
 		},
 		browseto : function(url) {
@@ -1171,7 +1171,7 @@ muze.namespace( 'muze.ariadne.explore.viewpane', function() {
 			
 			var store_root = muze.ariadne.registry.get('store_root');
 
-			var url = store_root + path + browse_template + viewmode + '.php?';
+			var url = store_root + path + browse_template + viewmode + '.html?';
 			if (muze.ariadne.explore.viewpane.typefilter) {
 				url = url + 'type=' + muze.ariadne.explore.viewpane.typefilter;
 			}
@@ -1220,7 +1220,7 @@ muze.namespace( 'muze.ariadne.explore.browseheader', function() {
 		},
 		load : function(path) {
 			muze.ariadne.explore.browseheader.currentpath = path;
-			var sUrl = muze.ariadne.registry.get('store_root')+path+'explore.browse.header.php';
+			var sUrl = muze.ariadne.registry.get('store_root')+path+'explore.browse.header.html';
 
 			var fadeOut = new YAHOO.util.Anim("browseheader", { opacity: {to: 0.3}}, 0.1);
 			fadeOut.animate();

@@ -251,8 +251,12 @@ class mysqlstore extends store{
 		$nodes_tbl=$this->tbl_prefix."nodes";
 		$query_string="select $nodes_tbl.path from $nodes_tbl where $nodes_tbl.object=$id";
 		$qresult = $this->store_run_query($query_string);
-                $result = $qresult->fetch_array(MYSQLI_ASSOC);
-		return $result;
+		if ($qresult) {
+			$result = $qresult->fetch_array(MYSQLI_ASSOC);
+			return $result;
+		} else {
+			return null;
+		}
 	}
 	
 	public function mogrify($id, $type, $vtype = null) {
