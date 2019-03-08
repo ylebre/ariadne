@@ -1,8 +1,0 @@
-<?php
-	$nolang = $ARCurrent->allnls;
-	$ARCurrent->allnls = true;
-	if ($this->CheckConfig($arCallFunction, $arCallArgs)) {
-		$arResult = $this->call('pobject::user.workflow.post.html',$arCallArgs);
-	}
-	$ARCurrent->allnls = $nolang;
-?>
