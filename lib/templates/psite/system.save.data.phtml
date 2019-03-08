@@ -21,7 +21,6 @@
 		// unset the properties array, so no properties can be passed to this template.
 		$properties = array();
 		$this->data->config->url_list = array( 'host' => array() , 'nls' => array());
-		$this->data->config->workspaceurl_list = array();
 
 		foreach ( $AR->nls->list as $key => $value) {
 			// $name is the variable that must be set for a language to be available.
@@ -188,24 +187,6 @@
 						$count++;
 					}
 
-					$workspaceurl=$this->getdata("workspaceurl",$key);
-					if (substr($workspaceurl, -1, 1)=='/') {
-						$workspaceurl=substr($workspaceurl, 0, -1);
-					}
-					if ($workspaceurl!=$this->data->$key->workspaceurl) {
-						$this->data->$key->workspaceurl=$workspaceurl;
-					}
-
-					preg_match('|^([a-z0-9]+)://([^/:]+)(:[0-9]+)?|i', $workspaceurl, $regs);
-					if ($workspaceurl) {
-						$this->data->config->workspaceurl_list['nls'][$key] = $workspaceurl;
-						if (!$this->data->config->workspaceurl_list['host'][$regs[2].$regs[3]]) {
-							$this->data->config->workspaceurl_list['host'][$regs[2].$regs[3]] = $key;
-						} else {
-							$this->error = ar::error( "Please fill in distinctive hostnames; they should not be the same for different languages.", 1208);
-						}
-					}
-
 					$properties["url"][$count]["protocol"] = $regs[1];
 					$properties["url"][$count]["host"]     = $regs[2];
 
@@ -216,7 +197,6 @@
 				}
 			}
 			$this->data->url = $this->data->{$this->data->nls->default}->url;
-			$this->data->workspaceurl=$this->data->{$this->data->nls->default}->workspaceurl;
 
 			if (!$this->error) {
 				$arResult = $this->save($properties);

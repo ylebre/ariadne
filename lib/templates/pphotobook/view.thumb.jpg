@@ -2,9 +2,9 @@
   $ARCurrent->nolangcheck=true;
   if ($this->CheckLogin("read") && $this->CheckConfig($arCallFunction, $arCallArgs)) {
 	if ($this->data->picture && $this->exists($this->data->picture)) {
-		$this->get($this->data->picture,"view.thumb.html");
+		$this->get($this->data->picture,"view.thumb.jpg");
 	} else {
-		$this->get("/system/photo/nothumb/", "view.thumb.html");
+		$this->get("/system/photo/nothumb/", "view.thumb.jpg");
 	}
   }
 ?>

@@ -42,25 +42,6 @@
 			echo (string)$snippet;
 		?>
 	</div>
-	<?php
-		if (getenv("ARIADNE_WORKSPACE") && workspace::enabled($this->path)) {
-	?>
-	<div class="field">
-		<label for="name" class="required"><?php echo $ARnls["ariadne:workspace:url"] . ": " . $workspace; ?></label>
-		<img class="flag" src="<?php echo $flagurl; ?>" alt="<?php echo $selectedlanguage; ?>">
-		<input id="name" type="text" name="<?php echo $selectednls."[workspaceurl]"; ?>"
-			value="<?php
-					if (!$workspaceurl = $this->getdata("workspaceurl", $selectednls)) {
-						if (!$this->arIsNewObject && ($selectednls==$this->data->nls->default)) {
-							$url = $this->getdata("workspaceurl", "none");
-						}
-					}
-					echo htmlspecialchars( $workspaceurl, ENT_QUOTES, 'UTF-8');
-				?>" class="inputline">
-	</div>
-	<?php
-		}
-	?>
 	<?php if (!$arNewType) { ?>
 	<div class="field">
 		<label for="summary"><?php echo $ARnls["summary"]; ?></label>
