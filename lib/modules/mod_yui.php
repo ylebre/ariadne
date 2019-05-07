@@ -701,7 +701,7 @@
 			return $result;
 		}
 
-		function getItems($arObject, $typeslist, $currentpath, $arReturnTemplate) {
+		public static function getItems($arObject, $typeslist, $currentpath, $arReturnTemplate) {
 			$result = array();
 			foreach( $typeslist as $type => $name ) {
 				$result[] = self::checkType($arObject, $type, $name, $currentpath, $arReturnTemplate);
