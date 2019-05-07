@@ -854,13 +854,15 @@ class pinp {
 			$token = $this->scanner->scan($value);
 			if (is_array($value)) {
 				$this->tokens = $value;
-				list($token, $token_value) = each(array_shift($this->tokens));
+				$entry = array_shift($this->tokens);
+				list($token, $token_value) = each($entry);
 			} else {
 				$token = $token;
 				$token_value = $value;
 			}
 		} else {
-			list($token, $token_value) = each(array_shift($this->tokens));
+			$entry = array_shift($this->tokens);
+			list($token, $token_value) = each($entry);
 		}
 		if ($this->token_ahead) {
 			$this->token = $this->token_ahead;
