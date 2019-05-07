@@ -680,6 +680,23 @@
 			return $result;
 		}
 
+		function getElementsByAttribute( $attribute, $recurse = true ) {
+			$nodeList = array();
+			foreach ($this as $node) {
+				if ( $node instanceof ar_xmlElement ) {
+					if ( $attribute == '*' || $node->getAttribute( $attribute ) ) {
+						$nodeList[] = $node;
+					}
+					if ($recurse) {
+						$nodeList = array_merge( $nodeList, (array) $node->getElementsByAttribute( $attribute ) );
+					}
+				}
+			}
+			$result = $this->getNodeList( $nodeList );
+			$result->isDocumentFragment = false;
+			return $result;
+		}
+
 		function getElementById( $id ) {
 			if (isset($this->parentNode)) {
 				return $this->parentNode->getElementById($id);
@@ -1176,6 +1193,12 @@
 		function getElementsByTagName( $name , $recurse = true ) {
 			if ( isset( $this->childNodes ) ) {
 				return $this->childNodes->getElementsByTagName( $name, $recurse );
+			}
+		}
+
+		function getElementsByAttribute( $attribute , $recurse = true ) {
+			if ( isset( $this->childNodes ) ) {
+				return $this->childNodes->getElementsByAttribute( $attribute, $recurse );
 			}
 		}
 
