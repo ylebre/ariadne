@@ -46,6 +46,8 @@
 		$cookies = (array)$_COOKIE["ARSessionCookie"];
 		$https = ($_SERVER['HTTPS']=='on');
 
+		$currentCookies = array();
+
 		foreach($cookies as $sessionid => $cookie){
 			if(!$AR->hideSessionIDfromURL){
 				if (!$ARCurrent->session->sessionstore->exists("/$sessionid/")) {
@@ -56,9 +58,22 @@
 							// but do kill it if it's older than one day
 							unset($cookies[$sessionid]);
 							setcookie("ARSessionCookie[".$sessionid."]",false);
+						} else {
+							$currentCookies[$sessionid] = $data['timestamp'];
 						}
 					}
 				}
+			}
+		}
+
+		// Keep a maximum of 15 session cookies for one client
+		if (sizeof($currentCookies) > 15) {
+			sort($currentCookies);
+			$removed = array_slice(array_keys($input), 15); // grab the session ids for all the older sessions
+			foreach ($removed as $sessionid) {
+				// and kill those sessions
+				unset($cookies[$sessionid]);
+				setcookie("ARSessionCookie[".$sessionid."]",false);
 			}
 		}
 
@@ -92,7 +107,7 @@
 			@array_push($ARCurrent->arCallStack, $arCallArgs);
 		}
 
-		$eventData = new object();
+		$eventData = new baseObject();
 		$eventData->arCallPath = $path;
 		$eventData->arCallFunction = ldGetCurrentTemplate( $function );
 		$eventData->arCallArgs = $arCallArgs;
@@ -128,7 +143,7 @@
 			@array_push($ARCurrent->arCallStack, $arCallArgs);
 		}
 
-		$eventData = new object();
+		$eventData = new baseObject();
 		$eventData->arCallPath = $path;
 		$eventData->arCallFunction = ldGetCurrentTemplate( $function );
 		$eventData->arCallArgs = $arCallArgs;
@@ -165,7 +180,7 @@
 			@array_push($ARCurrent->arCallStack, $arCallArgs);
 		}
 
-		$eventData = new object();
+		$eventData = new baseObject();
 		$eventData->arCallPath = $path;
 		$eventData->arCallFunction = ldGetCurrentTemplate( $function );
 		$eventData->arLoginMessage = $message;
@@ -236,7 +251,7 @@
 		global $AR;
 		$data = json_decode($cookie,true);
 		if(is_null($data)){
-			if(isset($AR->sessionCryptoKey) && extension_loaded('mcrypt') ) {
+			if(isset($AR->sessionCryptoKey) && function_exists('mcrypt_encrypt') ) {
 				$key = base64_decode($AR->sessionCryptoKey);
 				$crypto = new ar_crypt($key,MCRYPT_RIJNDAEL_256,1);
 				$data = json_decode($crypto->decrypt($cookie),true);
@@ -249,7 +264,7 @@
 	function ldEncodeCookie($cookie) {
 		global $AR;
 		$data = json_encode($cookie);
-		if(isset($AR->sessionCryptoKey) && extension_loaded('mcrypt') ) {
+		if(isset($AR->sessionCryptoKey) && function_exists('mcrypt_encrypt') ) {
 			$key = base64_decode($AR->sessionCryptoKey);
 			$crypto = new ar_crypt($key,MCRYPT_RIJNDAEL_256,1);
 			$encdata = $crypto->crypt($data);

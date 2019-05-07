@@ -35,7 +35,7 @@
 
 debug("pobject: Load","object");
 
-abstract class ariadne_object extends object { // ariadne_object class definition
+abstract class ariadne_object extends baseObject { // ariadne_object class definition
 
 	public $store;
 	public $path;
@@ -46,7 +46,7 @@ abstract class ariadne_object extends object { // ariadne_object class definitio
 		$this->path=$path;
 		$this->data=$data;
 		if ( !isset($this->data->config) ) {
-			$this->data->config = new object();
+			$this->data->config = new baseObject();
 		}
 	}
 
@@ -212,7 +212,7 @@ abstract class ariadne_object extends object { // ariadne_object class definitio
 
 							if (!class_exists($arType, false)) {
 								// the given class was not yet loaded, so do that now
-								$this->store->newobject('','',$arType,new object);
+								$this->store->newobject('','',$arType,new baseObject);
 							}
 							$arSuper=get_parent_class($arType);
 
@@ -397,7 +397,7 @@ abstract class ariadne_object extends object { // ariadne_object class definitio
 		return $properties;
 	}
 
-	public function save($properties="", $vtype="") {
+	public function save($properties=array(), $vtype="") {
 	/***********************************************************************
 	  save the current object.
 	  if this is a new object ($this->arIsNewObject) the path is checked and
@@ -421,7 +421,7 @@ abstract class ariadne_object extends object { // ariadne_object class definitio
 				if (!$this->exists($this->path)) { //arNewFilename)) {
 					if ($this->exists($arNewParent)) {
 						if (!$config = $this->data->config) {
-							$config=new object();
+							$config=new baseObject();
 						}
 					} else {
 						$this->error = ar::error( sprintf($ARnls["err:noparent"],$arNewParent), 1102);
@@ -471,7 +471,7 @@ abstract class ariadne_object extends object { // ariadne_object class definitio
 		// this makes sure the event handlers are run on $wf_object, so that $this->data changes don't change the data of the object to be saved
 		$this->pushContext(array('scope' => 'php', 'arCurrentObject' => $wf_object));
 
-		$eventData = new object();
+		$eventData = new baseObject();
 		$eventData->arCallArgs = $arCallArgs;
 		$eventData->arCallFunction	= $context['arCallFunction'];
 		$eventData->arIsNewObject = $arIsNewObject;
@@ -607,7 +607,7 @@ abstract class ariadne_object extends object { // ariadne_object class definitio
 		}
 		$context = $this->getContext();
 
-		$eventData = new object();
+		$eventData = new baseObject();
 		$eventData->arCallArgs = $arCallArgs;
 		$eventData->arCallFunction = $context['arCallFunction'];
 		$eventData = ar_events::fire( 'onbeforedelete', $eventData );
@@ -643,14 +643,14 @@ abstract class ariadne_object extends object { // ariadne_object class definitio
 				return $this->parent;
 				break;
 			default:
-				return $this->store->make_path($this->path, $path);
+				return self::sanitizePath($this->store->make_path($this->path, $path));
 		}
 	}
 
 	public function make_ariadne_url($path="") {
 		global $AR;
 		$path = $this->make_path($path);
-		return $AR->host . $AR->root . $this->store->get_config('rootoptions') . $path;
+		return self::sanitizeUrl($AR->host . $AR->root . $this->store->get_config('rootoptions') . $path);
 	}
 
 
@@ -740,7 +740,7 @@ abstract class ariadne_object extends object { // ariadne_object class definitio
 				$url = $protocol . $requestedHost . $AR->root . $rootoptions . $path;
 			}
 		}
-		return $url;
+		return self::sanitizeUrl($url);
 	}
 
 	protected function compare_hosts($url1, $url2) {
@@ -819,7 +819,15 @@ abstract class ariadne_object extends object { // ariadne_object class definitio
 		} else {
 			$rest=substr($path, strlen($site));
 		}
-		return $site_url.$rest;
+		return self::sanitizeUrl($site_url.$rest);
+	}
+	public function sanitizeUrl($url) {
+		// remove unexpected chars from the url;
+		return preg_replace("/[^\/{}:.A-Za-z0-9_-]/", "", $url);
+	}
+	public function sanitizePath($path) {
+		// remove unexpected chars from the path; same as url for now;
+		return self::sanitizeUrl($path);
 	}
 
 	public function AR_implements($implements) {
@@ -1552,7 +1560,7 @@ abstract class ariadne_object extends object { // ariadne_object class definitio
 				} else {
 					if (!class_exists($arType, false )) {
 						// the given class was not yet loaded, so do that now
-						$arTemp=$this->store->newobject('','',$arType,new object);
+						$arTemp=$this->store->newobject('','',$arType,new baseObject);
 					} else {
 						$arTemp=new $arType();
 					}
@@ -1792,7 +1800,7 @@ abstract class ariadne_object extends object { // ariadne_object class definitio
 
 			if (!$ARConfigChecked) {
 				// this template is the first template called in this request.
-				$eventData = new object();
+				$eventData = new baseObject();
 				$eventData->arCallArgs = $arCallArgs;
 				$eventData->arCallFunction = $arCallFunction;
 
@@ -1811,7 +1819,7 @@ abstract class ariadne_object extends object { // ariadne_object class definitio
 					if (!$ARCurrent->forcenls && (!isset($this->data->nls->list[$reqnls]) || !$config->nls->list[$reqnls])) {
 						if (!$ARCurrent->nolangcheck && $arCallFunction != 'config.ini') {
 							$ARCurrent->nolangcheck=1;
-							$eventData = new object();
+							$eventData = new baseObject();
 							$eventData->arCallFunction = $arCallFunction;
 							$eventData->arCallArgs = $arCallArgs;
 							$eventData->arRequestedNLS = $reqnls;
@@ -1948,7 +1956,7 @@ abstract class ariadne_object extends object { // ariadne_object class definitio
 							$continue=false;
 						}
 						if ($continue) {
-							$eventData = new object();
+							$eventData = new baseObject();
 							if ( !$AR->contextCallHandler ) { /* prevent onbeforecall from re-entering here */
 								$AR->contextCallHandler = true;
 								$eventData->arCallArgs = $arCallArgs;
@@ -1997,7 +2005,7 @@ abstract class ariadne_object extends object { // ariadne_object class definitio
 
 						if ( !$initialConfigChecked && $arCallFunction != 'config.ini' ) {
 							// this template was the first template called in this request.
-							$eventData = new object();
+							$eventData = new baseObject();
 							$eventData->arCallArgs = $arCallArgs;
 							$eventData->arCallFunction = $arCallFunction;
 							ar_events::fire( 'onview', $eventData ); // no default action to prevent, so ignore return value.
@@ -2056,7 +2064,7 @@ abstract class ariadne_object extends object { // ariadne_object class definitio
 					$ids=$this->store->info($this->store->find($path, "" , $limit, $offset));
 					while (is_array($ids) && count($ids)) {
 						foreach($ids as $value) {
-							$eventData = new object();
+							$eventData = new baseObject();
 							$eventData = ar_events::fire( 'onbeforeclearprivatecache', $eventData, $value['type'], $value['path'] );
 							if ( !$eventData ) {
 								continue;
@@ -2070,7 +2078,7 @@ abstract class ariadne_object extends object { // ariadne_object class definitio
 						$ids = $this->store->info($this->store->find($path, "", $limit, $offset));
 					}
 				} else {
-					$eventData = new object();
+					$eventData = new baseObject();
 					$eventData = ar_events::fire( 'onbeforeclearprivatecache', $eventData, $this->type, $this->path );
 					if ( $eventData ) {
 						$pcache->purge($this->id);
@@ -2323,8 +2331,8 @@ abstract class ariadne_object extends object { // ariadne_object class definitio
 				$result=$arStoreVars[$nls][$varname];
 			}
 			if ($result===false) {
-				if (isset($this->data->${nls}) && isset($this->data->${nls}->${varname})) {
-					$result=$this->data->${nls}->${varname};
+				if (isset($this->data->{$nls}) && isset($this->data->{$nls}->{$varname})) {
+					$result=$this->data->{$nls}->{$varname};
 				}
 			}
 		} else { // language independant variable.
@@ -2627,7 +2635,7 @@ abstract class ariadne_object extends object { // ariadne_object class definitio
 					)
 				);
 				$continue = true;
-				$eventData = new object();
+				$eventData = new baseObject();
 				if ( !$AR->contextCallHandler ) { /* prevent onbeforecall from re-entering here */
 					$AR->contextCallHandler = true;
 					$eventData->arCallArgs = $arCallArgs;
@@ -3132,9 +3140,9 @@ abstract class ariadne_object extends object { // ariadne_object class definitio
 			$this->data->$name = $value;
 		} else {
 			if (!$this->data->$nls) {
-				$this->data->$nls = new object;
+				$this->data->$nls = new baseObject;
 				if (!$this->data->nls) {
-					$this->data->nls = new object;
+					$this->data->nls = new baseObject;
 					$this->data->nls->default = $nls;
 				}
 				$this->data->nls->list[$nls] = $AR->nls->list[$nls];
@@ -3285,13 +3293,13 @@ abstract class ariadne_object extends object { // ariadne_object class definitio
 	public function _newobject($filename, $type) {
 		$newpath=$this->make_path($filename);
 		$newparent=$this->store->make_path($newpath, "..");
-		$data=new object;
+		$data=new baseObject;
 		$object=$this->store->newobject($newpath, $newparent, $type, $data);
 		$object->arIsNewObject=true;
 		return $object;
 	}
 
-	public function _save($properties="", $vtype="") {
+	public function _save($properties=array(), $vtype="") {
 		if (isset($properties) && is_array($properties)) {
 			// isn't this double work, the save function doesn this again
 			foreach ($properties as $prop_name => $prop) {
