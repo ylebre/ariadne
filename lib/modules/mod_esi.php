@@ -2,7 +2,7 @@
 require_once($AR->dir->install."/lib/modules/mod_htmlparser.php");
 
 class ESI {
-	function esiExpression( $expression ) {
+	public static function esiExpression( $expression ) {
 		/*  Regexp now matches $(HTTP_COOKIE{stuff});
 			TODO:
 			Add matching for:
@@ -58,22 +58,22 @@ class ESI {
 		return $result;
 	}
 
-	function esiRemove($page) {
+	public static function esiRemove($page) {
 		$regExp = '|<esi:remove>(.*)</esi:remove>|Uis';
 		return preg_replace($regExp, "", $page);
 	}
 
-	function esiComment($page) {
+	public static function esiComment($page) {
 		$regExp = '|<esi:comment[^>]*>|Uis';
 		return preg_replace($regExp, "", $page);
 	}
 
-	function esiMarker($page) {
+	public static function esiMarker($page) {
 		$regExp = '|<!--esi(.*)-->|Uis';
 		return preg_replace($regExp, '$1', $page);
 	}
 
-	function esiVars($page) {
+	public static function esiVars($page) {
 		$regExp = '|<esi:vars>(.*)</esi:vars>|Uis';
 		$page = preg_replace_callback($regExp, function($matches){
 			return ESI::esiExpression($matches[1]);
@@ -81,7 +81,7 @@ class ESI {
 		return $page;
 	}
 
-	function esiFetch($url) {
+	public static function esiFetch($url) {
 		$scriptName = $_SERVER["SCRIPT_NAME"] ? basename($_SERVER["SCRIPT_NAME"]) : basename($_SERVER["SCRIPT_FILENAME"]);
 		if ($scriptName) {
 			$scriptName = "/" . $scriptName;
@@ -121,7 +121,7 @@ class ESI {
 		return $replacement;
 	}
 
-	function esiTry($page) {
+	public static function esiTry($page) {
 		$regExp = '|<esi:try>.*?<esi:attempt>(.*)</esi:attempt>.*?<esi:except>(.*)</esi:except>.*?</esi:try>|Uis';
 		$page = preg_replace_callback($regExp, function($matches) {
 			$result = ESI::esiProcessAll($matches[1]);
@@ -133,7 +133,7 @@ class ESI {
 		return $page;
 	}
 
-	function esiChoose($page) {
+	public static function esiChoose($page) {
 		$regExp = '|<esi:choose>.*?(<esi:when[^>]*>.*</esi:when>)+.*?<esi:otherwise>(.*)</esi:otherwise>.*?</esi:choose>|is';
 
 		$page = preg_replace_callback($regExp, function($matches) {
@@ -153,7 +153,7 @@ class ESI {
 		return $page;
 	}
 
-	function esiEvaluate($test) {
+	public static function esiEvaluate($test) {
 		global $AR;
 
 		// print_r($test);
@@ -179,7 +179,7 @@ class ESI {
 		return $result;
 	}
 
-	function esiInclude($page) {
+	public static function esiInclude($page) {
 		/* TODO:
 			[v] alt
 			[v] onerror
@@ -221,7 +221,7 @@ class ESI {
 		return $page;
 	}
 
-	function esiProcessAll($page) {
+	public static function esiProcessAll($page) {
 		$page = ESI::esiMarker($page);
 		if ($page === false) {return false;}
 
@@ -246,7 +246,7 @@ class ESI {
 		return $page;
 	}
 
-	function esiProcess($page) {
+	public static function esiProcess($page) {
 		/*
 			TODO:
 				inline
