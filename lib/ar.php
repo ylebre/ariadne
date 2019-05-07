@@ -152,7 +152,7 @@
 			self::untaint( $value, $options['filter'], $options['flags'] );
 		}
 
-		public function getvar( $name ) {
+		public static function getvar( $name ) {
 			global $ARCurrent, $ARConfig;
 
 			if ($ARCurrent->arCallStack) {
@@ -172,7 +172,7 @@
 			return ar_loader::getvar( $name );
 		}
 
-		public function putvar( $name, $value ) {
+		public static function putvar( $name, $value ) {
 			global $ARCurrent;
 			$ARCurrent->$name = $value;
 		}
@@ -559,9 +559,9 @@
 
 	interface arKeyValueStoreInterface {
 
-		public function getvar( $name );
+		public static function getvar( $name );
 
-		public function putvar( $name, $value );
+		public static function putvar( $name, $value );
 
 	}
 
