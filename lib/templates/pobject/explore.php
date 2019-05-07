@@ -1,6 +1,6 @@
 <?php
 	$ARCurrent->nolangcheck = true;
-	if ($this->CheckLogin("read") && $this->CheckConfig()) {
+	if ($this->CheckLogin("edit") && $this->CheckConfig()) {
 		//$base_object = $AR->user;
 		$base_object = $this;
 
