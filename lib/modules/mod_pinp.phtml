@@ -832,7 +832,8 @@ class pinp {
 
 	function push_back_token() {
 		while (count($this->tokens)) {
-			list($token, $token_value) = each(array_shift($this->tokens));
+			$entry = array_shift($this->tokens);
+			list($token, $token_value) = each($entry);
 			$this->scanner->push_back($token_value);
 		}
 		$this->scanner->push_back($this->token_ahead_value);
